@@ -1,0 +1,115 @@
+{{template "header" }}
+<div id="app" style="width:100%">
+    <template>
+        <el-container v-loading.fullscreen.lock="fullscreenLoading">
+
+            <el-main class="mainMain">
+                <el-button style="margin-bottom: 10px;" @click="welcomeForm.id='';welcomeForm.content='';welcomeForm.keyword='welcome';welcomeDialog=true;" type="primary" size="small">添加欢迎</el-button>
+                <el-table
+                        :data="noticeList"
+                        border
+                        style="width: 100%">
+                    <el-table-column
+                            prop="content"
+                            label="回复内容">
+                        <template slot-scope="scope">
+                            <el-input type="textarea" v-model="scope.row.content"></el-input>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="content"
+                            label="延迟时间(秒)">
+                        <template slot-scope="scope">
+                            <el-input v-model="scope.row.delay_second"></el-input>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="ctime"
+                            label="添加时间">
+                    </el-table-column>
+                    <el-table-column
+                            prop="id"
+                            label="操作">
+                        <template slot-scope="scope">
+                            <el-button @click="welcomeForm.keyword=scope.row.keyword;welcomeForm.id=scope.row.id;welcomeForm.content=scope.row.content;welcomeDialog=true;" type="primary" size="small" icon="el-icon-edit" circle></el-button>
+                            <el-button @click="setWelcomeItem(scope.row.id,scope.row.content,scope.row.delay_second)" type="primary" size="small" icon="el-icon-refresh-left" circle></el-button>
+                            <el-button @click="deleteWelcome(scope.row.id)" type="danger" size="small" icon="el-icon-delete" circle></el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+
+                <el-button style="margin: 10px 0px;" @click="welcomeForm.id='';welcomeForm.content='';welcomeForm.keyword='wechat';welcomeWechatDialog=true;" type="primary" size="small">微信关注回复</el-button>
+                <el-table
+                        :data="wechatWelcomes"
+                        border
+                        style="width: 100%">
+                    <el-table-column
+                            prop="content"
+                            label="回复内容">
+                        <template slot-scope="scope">
+                            <el-input type="textarea" v-model="scope.row.content"></el-input>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="content"
+                            label="延迟时间(秒)">
+                        <template slot-scope="scope">
+                            <el-input v-model="scope.row.delay_second"></el-input>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="ctime"
+                            label="添加时间">
+                    </el-table-column>
+                    <el-table-column
+                            prop="id"
+                            label="操作">
+                        <template slot-scope="scope">
+                            <el-button @click="welcomeWechatDialog=true;welcomeForm.keyword=scope.row.keyword;welcomeForm.id=scope.row.id;welcomeForm.content=scope.row.content" type="primary" size="small" icon="el-icon-edit" circle></el-button>
+                            <el-button @click="setWelcomeItem(scope.row.id,scope.row.content,scope.row.delay_second)" type="primary" size="small" icon="el-icon-refresh-left" circle></el-button>
+                            <el-button @click="deleteWelcome(scope.row.id)" type="danger" size="small" icon="el-icon-delete" circle></el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </el-main>
+
+        </el-container>
+        <el-dialog
+                title="欢迎"
+                :visible.sync="welcomeDialog"
+                width="60%"
+                @opened="initEditor()"
+                @closed="destoryEditor()"
+        >
+            <el-form ref="welcomeForm" :model="welcomeForm" :rules="rules" label-width="70px">
+                <el-form-item label="内容"  prop="content">
+                    <div id="welcomeEditor" v-html="welcomeForm.content"></div>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="welcomeDialog = false">取 消</el-button>
+                <el-button type="primary" @click="submitWelcomeForm('welcomeForm',false)">确 定</el-button>
+              </span>
+        </el-dialog>
+
+        <el-dialog
+                title="欢迎"
+                :visible.sync="welcomeWechatDialog"
+                width="60%"
+        >
+            <el-form ref="welcomeForm" :model="welcomeForm" :rules="rules" label-width="70px">
+                <el-form-item label="内容"  prop="content">
+                    <el-input v-model="welcomeForm.content"  type="textarea" :autosize="{ minRows: 5, maxRows: 10}"></el-input>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="welcomeWechatDialog = false">取 消</el-button>
+                <el-button type="primary" @click="submitWelcomeForm('welcomeForm',true)">确 定</el-button>
+              </span>
+        </el-dialog>
+    </template>
+
+</div>
+</body>
+<script src="/static/js/wangEditor.min.js"></script>
+{{template "setting_bottom" .}}

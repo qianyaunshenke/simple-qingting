@@ -1,0 +1,46 @@
+package ${packageName}.service;
+
+import java.util.List;
+
+import ${packageName}.domain.${ClassName};
+#if($table.tree)
+import com.exam.ems.common.core.domain.Ztree;
+#end
+import com.baomidou.mybatisplus.extension.service.IService;
+/**
+ * ${functionName}Service接口
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+public interface I${ClassName}Service extends IService<${ClassName}>{
+
+    /**
+     * 查询${functionName}列表
+     *
+     * @param ${className} ${functionName}
+     * @return ${functionName}集合
+     */
+    List<${ClassName}> select${ClassName}List(${ClassName} ${className});
+
+
+
+    /**
+     * 批量删除${functionName}
+     *
+     * @param ids 需要删除的数据ID
+     * @return 结果
+     */
+    int delete${ClassName}ByIds(String ids);
+
+
+    #if($table.tree)
+
+        /**
+         * 查询${functionName}树列表
+         *
+         * @return 所有${functionName}信息
+         */
+        public List<Ztree> select${ClassName}Tree();
+    #end
+}

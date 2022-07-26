@@ -1,0 +1,92 @@
+{{template "header" }}
+<div id="app" style="width:100%">
+    <template>
+        <el-container>
+
+            <el-main class="mainMain">
+                <el-button style="margin-bottom: 10px;" @click="
+                newsForm.id='';
+                newsForm.title='';
+                newsForm.content='';
+                newsForm.tag='';
+                newsDialog=true" type="primary" size="small">添加公告</el-button>
+                <el-table
+                        :data="newsList.list"
+                        border
+                        style="width: 100%">
+                    <el-table-column
+                            prop="title"
+                            label="标题">
+                    </el-table-column>
+                    <el-table-column
+                            prop="tag"
+                            label="标签">
+                        <template slot-scope="scope">
+                            <el-tag effect="dark" :type='scope.row.tag'>
+                                <{scope.row.tag}>
+                            </el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="created_at"
+                            label="时间">
+                    </el-table-column>
+
+                    <el-table-column
+                            prop="id"
+                            label="操作">
+                        <template slot-scope="scope">
+                            <el-button @click="
+                            newsForm.id=scope.row.id;
+                            newsForm.title=scope.row.title;
+                            newsForm.content=scope.row.content;
+                            newsForm.tag=scope.row.tag;
+                            newsDialog=true;
+" type="primary" size="small" icon="el-icon-edit" circle></el-button>
+                            <el-button @click="deleteNews(scope.row.id)" type="primary" size="small" icon="el-icon-delete" circle></el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+
+                <el-pagination
+                        background
+                        @current-change="getNews"
+                        :current-page="newsList.page"
+                        layout="prev,pager, next"
+                        :page-size="newsList.pagesize"
+                        :total="newsList.count">
+                </el-pagination>
+            </el-main>
+
+        </el-container>
+        <el-dialog
+                title="编辑公告"
+                :visible.sync="newsDialog"
+                width="80%"
+                @opened="initEditor()"
+                @closed="destoryEditor()"
+                :close-on-click-modal="false"
+        >
+            <el-form :model="newsForm" label-width="70px">
+                <el-form-item label="标题"  prop="title">
+                    <el-input v-model="newsForm.title"></el-input>
+                </el-form-item>
+
+                <el-form-item label="标签"  prop="tag">
+                    <el-input v-model="newsForm.tag"></el-input>
+                </el-form-item>
+                <el-form-item label="内容"  prop="content">
+                    <div id="welcomeEditor" v-html="newsForm.content"></div>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="newsDialog = false">取 消</el-button>
+                <el-button type="primary" @click="saveNews('newsForm',true)">确 定</el-button>
+              </span>
+        </el-dialog>
+    </template>
+
+</div>
+</body>
+<script src="/static/js/wangEditor.min.js"></script>
+{{template "setting_bottom" .}}

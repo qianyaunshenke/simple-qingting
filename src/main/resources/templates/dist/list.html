@@ -1,0 +1,100 @@
+{{template "header" }}
+<div id="app" style="width:100%">
+    <template>
+        <el-container  v-loading.fullscreen.lock="fullscreenLoading">
+                <el-aside>
+                    <el-menu
+                    :default-active="fid">
+                        <el-menu-item  v-on:click="openUrl('/write')">
+                            <i class="el-icon-edit"></i>
+                            <span slot="title">写信</span>
+                        </el-menu-item>
+                        <el-menu-item :index="v" v-for="(f,v) in folders" v-bind:key="v"  v-on:click="getFolders(1,v,true)">
+                            <i class="el-icon-message"></i>
+                            <span slot="title"><{v}></span>
+                        </el-menu-item>
+                    </el-menu>
+                </el-aside>
+
+                <el-main class="mainMain">
+                    <div class="block">
+                        <el-timeline :reverse="true">
+                            <el-timeline-item  v-for="item in mails" v-bind:key="item.Id" :timestamp="item.Date" placement="top">
+                                <el-card  v-on:click.native="openUrl('/view?fid='+fid+'&id='+item.Id)">
+                                    <h4><{item.Subject}></h4>
+                                    <p><{item.From}> 发送于 <{item.Date}></p>
+                                </el-card>
+                            </el-timeline-item>
+                        </el-timeline>
+                    </div>
+                    <el-pagination
+                            background
+                            :current-page="page"
+                            :page-size="pagesize"
+                            @current-change="getFolders"
+                            layout="prev, pager, next"
+                            :total="mailTotal">
+                    </el-pagination>
+                </el-main>
+
+        </el-container>
+</template>
+
+</div>
+</body>
+<script>
+	new Vue({
+		el: '#app',
+        delimiters:["<{","}>"],
+		data: {
+            fullscreenLoading:true,
+            folders:[],
+            mails:[],
+            mailTotal:0,
+            page:1,
+            pagesize:10,
+            fid:"",
+		},
+		methods: {
+            //获取邮件夹
+            getFolders: function (page,fid,isLeft) {
+                this.fullscreenLoading=true;
+                if(typeof(page)=="undefined" || page==""){
+                    page=1;
+                }else{
+                    this.page=page;
+                }
+                let data={};
+                data.page=page;
+                if(typeof(fid)!="undefined" && fid!=""){
+                    data.fid=fid;
+                    this.fid=fid;
+                }else if(this.fid!=""){
+                    data.fid=this.fid;
+                }
+                let _this = this;
+                $.get('/folders',data, function (rs) {
+                    if(!isLeft){
+                        _this.folders=rs.result.folders;
+                    }
+                    _this.mails=rs.result.mails
+                    _this.mailTotal=rs.result.total;
+                    _this.pagesize=rs.result.pagesize;
+                    _this.fid=rs.result.fid;
+                    _this.fullscreenLoading=false;
+                }).then(()=>{
+                    _this.fullscreenLoading=false;
+                });
+            },
+            //跳转
+            openUrl(url){
+                window.location.href=url;
+            },
+		},
+        created: function () {
+            this.getFolders(1,"INBOX");
+        }
+	})
+
+</script>
+</html>

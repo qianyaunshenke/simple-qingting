@@ -1,0 +1,632 @@
+<html lang="cn">
+<head>
+    <meta charset="utf-8">
+    <title>智能在线客服系统</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/element-ui/2.15.1/theme-chalk/index.min.css">
+    <script src="https://cdn.staticfile.org/vue/2.6.11/vue.min.js"></script>
+    <script src="https://cdn.staticfile.org/element-ui/2.15.1/index.js"></script>
+    <script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/static/js/functions.js"></script>
+    <script src="/static/js/reconnecting-websocket.min.js"></script>
+    <link rel="stylesheet" href="/static/css/icono.min.css" />
+    <link rel="stylesheet" href="/static/css/front.css"/>
+    <link rel="stylesheet" href="/static/css/common.css?v=1.0.1"/>
+
+    <style>
+        .el-row{width:100%}
+        .chatBgContext .el-row{margin-bottom: 5px;}
+        .chatBgContext{position: relative;height: 100%;width: 100%;}
+        .chatUser{
+            line-height: 24px;
+            font-size: 12px;
+            white-space: nowrap;
+            color: #999;
+        }
+
+        .chatBoxMe .el-col-3{float: right;text-align: right;}
+        .chatBoxMe .chatUser{text-align: right}
+        .chatTime{text-align: center;color: #bbb;margin: 5px 0;font-size: 12px;}
+        .el-message-box__content{
+            overflow: auto;
+            height: auto;
+            max-height: 90%;
+        }
+        .el-message-box{
+            width: auto;
+            max-width: 100%;
+        }
+        .change-rebot {
+          color: #07a9fe;
+          text-decoration: none;
+          cursor: pointer;
+        }
+    </style>
+</head>
+<body style="overflow-y: hidden">
+<div id="app" class="chatMainPage">
+    <template>
+            <el-row :gutter="2"  >
+                <el-col :span="6">
+                    <div class="chatBg chatLeft">
+
+                        <el-tabs v-model="leftTabActive" @tab-click="handleTabClick">
+                            <el-tab-pane :label="flyLang.chatVisitor" name="first"  class="kefuVisitorList">
+                                <div class="noVisitor" v-show="users.length==0">
+                                    <div><i class="el-icon-chat-dot-square"></i></div>
+                                    NO ONLINE VISITORS
+                                </div>
+                                <el-row  v-for="item in users" :key="item.visitor_id">
+                                    <div :title="item.last_message" style="cursor:pointer" class="onlineUsers hasLastMsg" v-bind:class="{'cur': item.visitor_id==currentGuest }" v-on:click="talkTo(item.visitor_id,item.username)">
+                                        <el-col :span="4">
+                                            <el-badge value="new" :hidden="item.hidden_new_message" class="item">
+                                                <el-avatar :size="40" :src="item.avator"></el-avatar>
+                                            </el-badge>
+                                        </el-col>
+                                        <el-col :span="16">
+                                            <div style="height:20px;overflow: hidden"><{item.username}></div>
+                                            <div class="lastNewMsg"><{item.last_message}></div>
+                                        </el-col>
+                                    </div>
+                                </el-row>
+                            </el-tab-pane>
+                            <el-tab-pane :label="flyLang.allVisitor" name="second" class="kefuVisitorList">
+                                <div class="searchVisitor">
+                                    <el-input
+                                            placeholder="search visitor name"
+                                            v-model="visitorName"
+                                            class="input-with-select"
+                                            clearable>
+                                        <el-select clearable="true" @change="getVisitorPage(1)" slot="prepend" placeholder="tag" v-model="visitorTag" style="width: 80px">
+                                            <el-option :label="item.name" :value="item.id" v-for="item in allTags" v-bind:key="item.id"></el-option>
+                                        </el-select>
+
+                                        <el-button slot="append" icon="el-icon-search" @click="getVisitorPage(1)"></el-button>
+                                    </el-input>
+                                </div>
+                                <el-row  v-for="item in visitors" :key="item.id" class="">
+                                    <div style="cursor:pointer" class="onlineUsers" v-bind:class="{'cur': item.visitor_id==currentGuest }" v-on:click="talkTo(item.visitor_id,item.username)">
+                                        <el-col :span="3">
+                                            <el-badge :value="item.unread_num" :hidden="!item.unread_num" class="item">
+                                                <el-avatar :size="40" :src="item.avator"></el-avatar>
+                                            </el-badge>
+                                        </el-col>
+                                        <el-col :span="15">
+                                            <div style="height:20px;overflow: hidden"><{item.username}></div>
+                                            <div class="lastNewMsg" v-if="item.last_message"><{item.last_message}></div>
+                                            <div class="lastNewMsg" v-else>NO NEWS</div>
+                                        </el-col>
+                                        <el-col :span="6" class="visitorTime">
+                                            <{formatTime("Y-m-d H:M:S",item.updated_at)}>
+                                        </el-col>
+                                    </div>
+                                </el-row>
+                                <el-pagination
+                                        class="kefuVisitorPage"
+                                        background
+                                        @current-change="visitorPage"
+                                        :current-page="visitorCurrentPage"
+                                        small
+                                        layout="prev,pager, next"
+                                        :page-size="visitorPageSize"
+                                        :total="visitorCount">
+                                </el-pagination>
+                            </el-tab-pane>
+                        </el-tabs>
+                    </div>
+                </el-col>
+                <el-col :span="18" v-show="visitor.visitor_id==''">
+                    <div class="kefuNoVisitor">
+                        <div class="kefuNoVisitorIcno"><i style="color:rgb(198 219 255);" class="el-icon-chat-dot-round"></i></div>
+                        SMART LIVE CHAT
+                    </div>
+                </el-col>
+                <el-col :span="12" v-show="visitor.visitor_id!=''"   v-loading="loading">
+                    <div class="kefuMainBg chatBgContext" @click="resizeChatBox;rightMenuVisible=false">
+                        <el-alert
+                                style="background: #fff;"
+                                :closable="false"
+                                :type="chatTitleType"
+                                show-icon
+                                :title="chatTitle"
+                                >
+                        </el-alert>
+
+
+                        <div class="chatBox">
+                            <div style="cursor: pointer" class="chatTime" v-on:click="loadMoreMessages('')" v-show="showLoadMore"><{flyLang.moremessage}></div>
+                            <div class="landPage" style="display: none;">
+                                <el-tooltip :content="visitor.refer">
+                                    <div class="profileItem" :title="visitor.refer">
+                                        <div class="profileLeft">
+                                            <i class="el-icon-paperclip"></i>
+                                            land page
+                                        </div>
+                                        <div class="profileRight" v-on:click="copyText(visitor.refer)"><{visitor.refer}></div>
+                                        <div class="clear"></div>
+                                    </div>
+                                </el-tooltip>
+                                <el-tooltip  v-for="v in visitorExtra" :content="v.val">
+                                    <div class="profileItem" :title="v.val">
+                                        <div class="profileLeft">
+                                            <i class="el-icon-paperclip"></i>
+                                            <{v.key}>
+                                        </div>
+                                        <div class="profileRight" v-on:click="copyText(v.val)"><{v.val}></div>
+                                        <div class="clear"></div>
+                                    </div>
+                                </el-tooltip>
+                            </div>
+                            <el-row :gutter="2" v-for="v in msgList" v-bind:class="{'chatBoxMe': v.is_kefu==true}">
+                                <div class="chatTime"><{v.time}></div>
+                                <el-col :span="3"><el-avatar shape="square" :size="48" :src="v.avator"></el-avatar></el-col>
+                                <el-col :span="21">
+                                    <div class="chatUser"><{v.name}></div>
+                                    <div class="chatContent" v-html="v.content" @contextmenu.prevent="rightClick(v)"></div>
+                                    <div class="chatReadStatus" v-show="v.is_kefu==true"><{v.read_status}></div>
+                                </el-col>
+                            </el-row>
+                        </div>
+
+                        <div class="kefuFuncBox">
+                            <el-alert
+                                    style="position:absolute;top:-30px;background: transparent!important;"
+                                    :closable="false"
+                                    type="info"
+                                    show-icon
+                                    v-show="chatInputing!=''"
+                                    :title="chatInputing"
+                            >
+                            </el-alert>
+                            <div class="iconBtnsBox">
+                                <div class="faceBox kefuFaceBox" style="display: none">
+                                    <ul class="faceBoxList">
+                                        <li v-on:click="faceIconClick(i)" class="faceIcon" v-for="(v,i) in face"  :title="v.name"><img :src=v.path></li>
+                                    </ul>
+                                    <div class="clear"></div>
+                                </div>
+                                <div class="iconBtns">
+
+                                    <div title="发送表情" class="icono-smile" id="faceBtn"></div>
+
+                                    <el-tooltip content="上传图片" placement="top">
+                                        <div title="上传图片" class="icono-image" id="uploadImg" v-on:click="uploadImg('/uploadimg')"></div>
+                                    </el-tooltip>
+                                    <el-tooltip content="上传文件" placement="top">
+                                        <div title="上传文件" class="icono-folder kefuFolderBtn" id="uploadFile" v-on:click="uploadFile('/uploadfile')"></div>
+                                    </el-tooltip>
+                                    <el-tooltip content="发送录音" placement="top">
+                                        <div title="发送录音" class="icono-microphone"  v-on:click="audioDialog=true"></div>
+                                    </el-tooltip>
+                                    <el-tooltip content="客服转接" placement="top">
+                                        <div title="转接" class="icono-locationArrow" v-on:click="transKefu"></div>
+                                    </el-tooltip>
+                                    <el-tooltip content="清除聊天记录" placement="top">
+                                        <div title="清除聊天记录" class="icono-trash" v-on:click="deleteVisitorMessage(visitor.visitor_id)" ></div>
+                                    </el-tooltip>
+                                    <el-tooltip content="结束会话" placement="top">
+                                        <div title="结束会话" class="icono-crossCircle" v-on:click="closeVisitor(visitor.visitor_id)"></div>
+                                    </el-tooltip>
+                                    <el-tooltip content="拉黑用户" placement="top">
+                                        <div title="拉黑用户" class="icono-forbidden" v-on:click="addVisitorBlack()"></div>
+                                    </el-tooltip>
+                                    <el-tooltip content="发送评价" placement="top">
+                                        <div title="发送评价" class="icono-heart" v-on:click="sendComment()"></div>
+                                    </el-tooltip>
+                                    <div style="display: none;" title="英文翻译" class="icono-dribbble" v-on:click="translate"></div>
+                                    <el-button class="kefuSendBtn" :disabled="sendDisabled" size="small" type="primary" v-on:click="chatToUser"><{flyLang.sent}></el-button>
+                                </div>
+                            </div>
+                            <div class="clear"></div>
+                            <el-input @blur="resizeChatBox"  @focus="resizeChatBox" :autosize="{ minRows: 2, maxRows: 10}" type="textarea" class="chatArea" v-model="messageContent"  v-on:keyup.enter.native="chatToUser"  placeholder="请输入内容"></el-input>
+                        </div>
+
+                    </div>
+                </el-col>
+                <el-col :span="6" v-show="visitor.visitor_id!=''">
+                    <div   class="chatBg chatRight">
+                        <el-tabs v-model="rightTabActive" @tab-click="handleTabClick">
+                            <el-tab-pane :label="flyLang.visitorProfile" name="visitorInfo">
+                                <div class="profile">
+                                    <el-tooltip content="点击加入黑名单" placement="left">
+                                    <div class="profileItem" v-on:click="addIpblack(visitor.source_ip)">
+                                        <div class="profileLeft"><i class="el-icon-place"></i>
+                                            <{flyLang.ipAddress}>
+                                        </div>
+                                        <div class="profileRight"><{visitor.source_ip}></div>
+                                        <div class="clear"></div>
+                                    </div>
+                                    </el-tooltip>
+
+                                    <div class="profileItem">
+                                            <div class="profileLeft"><i class="el-icon-s-platform"></i>
+                                                <{flyLang.OsVersion}>
+                                            </div>
+                                            <div class="profileRight"><{visitor.osVersion}></div>
+                                            <div class="clear"></div>
+                                    </div>
+                                    <div class="profileItem" :title="visitor.browser">
+                                        <div class="profileLeft"><i class="el-icon-eleme"></i>
+                                            <{flyLang.Browser}>
+                                        </div>
+                                        <div class="profileRight"><{visitor.browser}></div>
+                                        <div class="clear"></div>
+                                    </div>
+                                    <div class="profileItem"  v-on:click="openUrl('https://www.baidu.com/s?wd='+visitor.client_ip)">
+                                        <div class="profileLeft">
+                                            <i class="el-icon-map-location"></i>
+                                            <{flyLang.city}>
+                                        </div>
+                                        <div class="profileRight"><{visitor.city}></div>
+                                        <div class="clear"></div>
+                                    </div>
+                                    <div class="profileItem">
+                                        <div class="profileLeft">
+                                            <i class="el-icon-time"></i>
+                                            <{flyLang.firstTime}>
+                                        </div>
+                                        <div class="profileRight"><{visitor.created_at}></div>
+                                        <div class="clear"></div>
+                                    </div>
+                                    <div class="profileItem">
+                                        <div class="profileLeft">
+                                            <i class="el-icon-time"></i>
+                                            <{flyLang.lastTime}>
+                                        </div>
+                                        <div class="profileRight"><{visitor.updated_at}></div>
+                                        <div class="clear"></div>
+                                    </div>
+                                    <el-tooltip :content="visitor.refer" placement="left">
+                                    <div class="profileItem" :title="visitor.refer">
+                                        <div class="profileLeft">
+                                            <i class="el-icon-guide"></i>
+                                            <{flyLang.title}>
+                                        </div>
+                                        <div class="profileRight"><{visitor.refer}></div>
+                                        <div class="clear"></div>
+                                    </div>
+                                    </el-tooltip>
+                                    <el-tooltip  :content="visitor.visitor_id" placement="left">
+                                        <div class="profileItem">
+                                            <div class="profileLeft">
+                                                <i class="el-icon-paperclip"></i>
+                                                visitorId
+                                            </div>
+                                            <div class="profileRight"><{visitor.visitor_id}></div>
+                                            <div class="clear"></div>
+                                        </div>
+                                    </el-tooltip>
+                                    <el-tooltip  :content="visitor.visit_num" placement="left">
+                                        <div class="profileItem">
+                                            <div class="profileLeft">
+                                                <i class="el-icon-paperclip"></i>
+                                                访问次数
+                                            </div>
+                                            <div class="profileRight"><{visitor.visit_num}></div>
+                                            <div class="clear"></div>
+                                        </div>
+                                    </el-tooltip>
+                                    <el-tooltip  v-for="v in visitorExtra" :content="v.val" placement="left">
+                                        <div class="profileItem" :title="v.val">
+                                            <div class="profileLeft">
+                                                <i class="el-icon-paperclip"></i>
+                                                <{v.key}>
+                                            </div>
+                                            <div class="profileRight" v-on:click="copyText(v.val)"><{v.val}></div>
+                                            <div class="clear"></div>
+                                        </div>
+                                    </el-tooltip>
+                                </div>
+                                <div class="profile">
+                                    <div class="profileItem" style="height:auto;line-height:unset;">
+                                        <el-tag
+                                                type='success'
+                                                style="margin: 4px;"
+                                                :key="tag"
+                                                v-for="tag in dynamicTags"
+                                                closable
+                                                effect="dark"
+                                                :disable-transitions="true"
+                                                @close="delTag(tag.tag_name)">
+                                            <{tag.tag_name}>
+                                        </el-tag>
+                                        <el-select @change="addTag" clearable="true" v-model="inputValue" style="width: 100px">
+                                            <el-option :label="item.name" :value="item.name" v-for="item in allTags" v-bind:key="item.id"></el-option>
+                                        </el-select>
+                                        <el-input
+                                                class="input-new-tag"
+                                                v-if="inputVisible"
+                                                v-model="inputValue"
+                                                ref="saveTagInput"
+                                                size="small"
+                                                @keyup.enter.native="addTag"
+                                                @blur="addTag"
+                                        >
+                                        </el-input>
+                                        <el-button style="margin: 4px;" v-else class="button-new-tag" size="small" @click="showInput">+ New Tag</el-button>
+                                    </div>
+                                </div>
+                                <div class="profile">
+                                    <div class="profileItem">
+                                        <div class="profileLeft">
+                                            <{flyLang.realname}>
+                                        </div>
+                                        <div class="profileRight">
+                                            <el-input @change="saveVisitorAttr({'real_name':visitorAttrs.real_name})" v-model="visitorAttrs.real_name"  size="mini" :placeholder="flyLang.realname"></el-input>
+                                        </div>
+                                        <div class="clear"></div>
+                                    </div>
+                                    <div class="profileItem">
+                                        <div class="profileLeft">
+                                            <{flyLang.tel}>
+                                        </div>
+                                        <div class="profileRight">
+                                            <el-input @change="saveVisitorAttr({'tel':visitorAttrs.tel})" v-model="visitorAttrs.tel" size="mini" :placeholder="flyLang.tel"></el-input>
+                                        </div>
+                                        <div class="clear"></div>
+                                    </div>
+                                    <div class="profileItem">
+                                        <div class="profileLeft">
+                                            <{flyLang.email}>
+                                        </div>
+                                        <div class="profileRight">
+                                            <el-input @change="saveVisitorAttr({'email':visitorAttrs.email})" v-model="visitorAttrs.email" size="mini" :placeholder="flyLang.email"></el-input>
+                                        </div>
+                                        <div class="clear"></div>
+                                    </div>
+                                    <div class="profileItem">
+                                        <div class="profileLeft">
+                                            QQ
+                                        </div>
+                                        <div class="profileRight">
+                                            <el-input @change="saveVisitorAttr({'qq':visitorAttrs.qq})" v-model="visitorAttrs.qq"  size="mini" placeholder="QQ"></el-input>
+                                        </div>
+                                        <div class="clear"></div>
+                                    </div>
+                                    <div class="profileItem">
+                                        <div class="profileLeft">
+                                            <{flyLang.wechat}>
+                                        </div>
+                                        <div class="profileRight">
+                                            <el-input @change="saveVisitorAttr({'wechat':visitorAttrs.wechat})" v-model="visitorAttrs.wechat" size="mini" :placeholder="flyLang.wechat"></el-input>
+                                        </div>
+                                        <div class="clear"></div>
+                                    </div>
+                                    <div style="padding: 10px">
+                                        <el-input :rows="4" type="textarea" v-model="visitorAttrs.comment" @change="saveVisitorAttr({'comment':visitorAttrs.comment})" :placeholder="flyLang.comment"></el-input>
+                                    </div>
+                                </div>
+
+                                <div class="replyBox">
+                                    <el-tooltip content="首个分组置顶展示到访客页" placement="left">
+                                    <div class="chatRightTitle"><{flyLang.quickReply}>
+                                        <a href="javascript:void(0);"  @click="replyGroupDialog = true">+<{flyLang.addGroup}></a>
+                                    </div>
+                                    </el-tooltip>
+                                    <el-input :placeholder="flyLang.replaySearch" v-model="replySearch" class="replySearch" @keyup.enter="searchReply">
+                                        <el-button slot="append" icon="el-icon-search" @click="searchReply"></el-button>
+                                    </el-input>
+                                    <div class="replyContent">
+                                        <el-collapse v-show="replySearchList" v-model="replySearchListActive">
+                                            <el-collapse-item v-for="reply in replySearchList" :key="reply.group_id" :title="reply.group_name" :name="reply.group_id">
+                                                <template slot="title">
+                                                    <i class="el-icon-folder"></i>&nbsp;<{reply.group_name}>
+                                                </template>
+                                                <div class="replyItem" @click="messageContent=item.item_content"  v-for="item in reply.items" ><{item.item_content}> &nbsp;&nbsp;<el-button @click="deleteReplyContent(item.item_id)" type="text">删除</el-button></div>
+                                                <el-button @click="replyContentDialog=true;groupName=reply.group_name;groupId=reply.group_id" type="text">+添加回复内容</el-button>
+                                                <el-button @click="deleteReplyGroup(reply.group_id)" type="text">-删除组</el-button>
+                                            </el-collapse-item>
+                                        </el-collapse>
+                                        <el-collapse v-show="replySearchList.length==0">
+                                            <el-collapse-item v-for="reply in replys" :key="reply.group_id" :title="reply.group_name" :name="reply.group_id">
+                                                <template slot="title">
+                                                    <i class="el-icon-s-order"></i>&nbsp;<{reply.group_name}>
+                                                </template>
+                                                <div class="replyItem" @click="messageContent=item.item_content"  v-for="item in reply.items" >
+                                                    <el-popover
+                                                            placement="left"
+                                                            width="300"
+                                                            trigger="hover">
+                                                        <div v-html="replaceContent(item.item_content)">
+                                                        </div>
+                                                        <div class="replyItemTitle" slot="reference"><i class="header-icon el-icon-document"></i> <{item.item_name}></div>
+                                                    </el-popover>
+                                                    <el-button @click="editReplyContent('no',item.item_id,item.item_name,item.item_content)" type="text">编辑</el-button>
+                                                    <el-button @click="deleteReplyContent(item.item_id)" type="text">删除</el-button></div>
+                                                <el-button @click="replyContentDialog=true;groupName=reply.group_name;groupId=reply.group_id" type="text">+添加回复内容</el-button>
+                                                <el-button @click="deleteReplyGroup(reply.group_id)" type="text">-删除组</el-button>
+
+                                            </el-collapse-item>
+                                        </el-collapse>
+                                    </div>
+                                </div>
+                            </el-tab-pane>
+
+                            <el-tab-pane :label="flyLang.visitorAction" name="visitorMove">
+                                <div class="visitorCard visitorMove"  style="padding: 10px">
+
+                                    <el-timeline>
+                                        <el-timeline-item
+                                                v-for="v in visitorAction.activities"
+                                                :timestamp="v.created_at">
+                                            <a :title="v.title" :href="v.url" target="_blank"><{v.title}></a>
+                                        </el-timeline-item>
+                                    </el-timeline>
+
+                                </div>
+                                <el-pagination
+                                        background
+                                        @current-change="getVisitorExt"
+                                        :current-page="visitorAction.currentPage"
+                                        small
+                                        layout="prev,pager, next"
+                                        :page-size="visitorAction.pageSize"
+                                        :total="visitorAction.count">
+                                </el-pagination>
+                            </el-tab-pane>
+                            <el-tab-pane label="禁用访客" name="blackList">
+                                <div class="visitorCard visitorMove" style="padding: 10px">
+
+                                    <el-timeline>
+                                        <el-timeline-item
+                                                v-for="v in visitorBlacks.list"
+                                                :timestamp="v.created_at">
+                                            <a title="点击删除黑名单" v-on:click="delVisitorBlack(v.id)"><{v.name}> (<{v.visitor_id}>)</a>
+                                        </el-timeline-item>
+                                    </el-timeline>
+
+                                </div>
+                                <el-pagination
+                                        background
+                                        @current-change="getVisitorBlacks"
+                                        :current-page="visitorBlacks.currentPage"
+                                        small
+                                        layout="prev,pager, next"
+                                        :page-size="visitorBlacks.pagesize"
+                                        :total="visitorBlacks.count">
+                                </el-pagination>
+                            </el-tab-pane>
+                            <el-tab-pane label="IP黑名单" name="ipBlackList">
+                                <div class="visitorCard" style="padding: 10px">
+
+                                    <el-timeline>
+                                        <el-timeline-item
+                                                v-for="v in ipBlacks"
+                                                :timestamp="v.create_at">
+                                            <a title="点击删除黑名单" v-on:click="delIpblack(v.ip)"><{v.ip}>(<{v.name}>)</a>
+                                        </el-timeline-item>
+                                    </el-timeline>
+
+                                </div>
+                            </el-tab-pane>
+                        </el-tabs>
+
+                    </div>
+
+                </el-col>
+            </el-row>
+        <!--图片放大-->
+        <div id="bigPic" class="bigPic">
+            <img src="/static/images/3.jpg"/>
+        </div>
+        <!--//图片放大-->
+        <audio id="chatMessageAudio">
+            <source id="chatMessageAudioSource" src="/static/images/alert2.ogg" type="audio/mpeg" />
+        </audio>
+        <audio id="chatMessageSendAudio">
+            <source id="chatMessageSendAudioSource" src="/static/images/sent.ogg" type="audio/mpeg" />
+        </audio>
+        <video id="chatRtc" style="display: none"></video>
+        <!--转接-->
+        <el-dialog
+                title="转移客服"
+                :visible.sync="transKefuDialog"
+                width="30%"
+                top="0"
+        >
+            <el-table
+                    :data="otherKefus"
+                    style="width: 100%">
+                <el-table-column
+                        prop="nickname"
+                        label="客服">
+                </el-table-column>
+                <el-table-column
+                        prop="status"
+                        label="操作">
+                    <template slot-scope="scope">
+                        <el-tag v-show="scope.row.status=='offline'"
+                                disable-transitions>离线</el-tag>
+                        <el-button v-show="scope.row.status=='online'" type="primary" @click="transKefuVisitor(scope.row.name,visitor.visitor_id)">转移</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="transKefuDialog = false"><{flyLang.cancel}></el-button>
+              </span>
+        </el-dialog>
+        <!--//转接-->
+        <!--回复分组-->
+        <el-dialog
+                :title="flyLang.addGroup"
+                :visible.sync="replyGroupDialog"
+                width="50%"
+                height="500px"
+                top="0"
+        >
+                <el-input  v-model="groupName"></el-input>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="addReplyGroup"><{flyLang.save}></el-button>
+                <el-button @click="replyGroupDialog = false"><{flyLang.cancel}></el-button>
+              </span>
+        </el-dialog>
+        <!--//回复分组-->
+        <!--回复内容-->
+        <el-dialog
+                title="添加回复内容"
+                :visible.sync="replyContentDialog"
+                width="50%"
+                height="600px"
+                top="0"
+                @opened="initEditor()"
+                @closed="destoryEditor()"
+                :close-on-click-modal="false"
+        >
+            <el-input style="margin-bottom: 10px;" placeholder="关键词"  v-model="replyTitle"></el-input>
+            <div id="welcomeEditor" v-html="replyContent"></div>
+
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="addReplyContent"><{flyLang.save}></el-button>
+                <el-button @click="replyContentDialog = false"><{flyLang.cancel}></el-button>
+              </span>
+        </el-dialog>
+        <el-dialog
+                title="编辑回复内容"
+                :visible.sync="editReplyContentDialog"
+                width="50%"
+                height="600px"
+                top="0"
+                :close-on-click-modal="false"
+        >
+            <el-input style="margin-bottom: 10px;" placeholder="关键词"  v-model="replyTitle"></el-input>
+            <el-input placeholder="内容" type="textarea" :autosize="{ minRows: 8, maxRows: 12}"  v-model="replyContent"></el-input>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="editReplyContent('yes')"><{flyLang.save}></el-button>
+                <el-button @click="editReplyContentDialog = false"><{flyLang.cancel}></el-button>
+              </span>
+        </el-dialog>
+        <!--//回复内容-->
+        <!--右键菜单-->
+        <div id="rightMenu"
+             v-show="rightMenuVisible"
+             class="rightMenu">
+            <div class="rightMenuItem"
+                 @click="copyText(currentMessage.content);rightMenuVisible=false">复制</div>
+            <div v-show="currentMessage.is_kefu" class="rightMenuItem"
+                 @click="deleteMessage(currentMessage.msg_id);rightMenuVisible=false">撤回</div>
+        </div>
+        <!--//右键菜单-->
+        <!--录音-->
+        <el-dialog
+                :visible.sync="audioDialog"
+                width="60%"
+                top="10%">
+            <div class="dialogRecoder">
+                <el-progress type="circle" :format="recoderFormat" :stroke-width="10" :percentage="recoderSecond"></el-progress>
+                <br/>
+                <audio v-show="recorderEnd" controls ref="audio" muted="muted" src="" id="audio"></audio>
+                <br/>
+                <el-button id="start" @click="startRecoder($event)"><{flyLang.start}></el-button>
+                <el-button @click="stopRecoder($event)"><{flyLang.stop}></el-button>
+                <el-button @click="sendRecoder()"><{flyLang.sent}></el-button>
+                <el-button @click="cancelRecoder()"><{flyLang.cancel}></el-button>
+            </div>
+        </el-dialog>
+        <!--//录音-->
+    </template>
+</div>
+</body>
+<script src="/static/js/chat-lang.js?v=1.0.1"></script>
+<script src="/static/js/wangEditor.min.js"></script>
+<script src="/static/js/chat-main.js?v=0.6.7"></script>
+<script src="/static/js/recoder.js"></script>
+</html>

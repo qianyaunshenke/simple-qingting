@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.devops.project.business.mapper.KnowledgeCategoryMapper">
+    
+    <resultMap type="com.devops.project.business.domain.KnowledgeCategory" id="KnowledgeCategoryResult">
+        <result property="categoryId"    column="category_id"    />
+        <result property="categoryName"    column="category_name"    />
+        <result property="sort"    column="sort"    />
+        <result property="pid"    column="pid"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectKnowledgeCategoryVo">
+        select category_id, category_name, sort, create_by, create_time, update_by, update_time, remark from knowledge_category
+    </sql>
+
+    <select id="selectKnowledgeCategoryList" parameterType="com.devops.project.business.domain.KnowledgeCategory" resultMap="KnowledgeCategoryResult">
+        <include refid="selectKnowledgeCategoryVo"/>
+        <where>  
+            <if test="categoryName != null  and categoryName != ''"> and category_name like concat('%', #{categoryName}, '%')</if>
+            <if test="pid != null "> and pid = #{pid}</if>
+            <if test="sort != null "> and sort = #{sort}</if>
+        </where>
+    </select>
+
+
+    <delete id="deleteKnowledgeCategoryByIds" parameterType="String">
+        delete from knowledge_category where category_id in 
+        <foreach item="categoryId" collection="array" open="(" separator="," close=")">
+            #{categoryId}
+        </foreach>
+    </delete>
+
+
+</mapper>

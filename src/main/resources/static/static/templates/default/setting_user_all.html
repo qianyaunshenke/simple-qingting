@@ -1,0 +1,68 @@
+{{template "header" }}
+<div id="app" style="width:100%">
+    <template>
+        <el-container v-loading.fullscreen.lock="fullscreenLoading">
+
+            <el-main class="mainMain">
+                <el-table
+                        :data="kefuListAll.list"
+                        border
+                        style="width: 100%;">
+                    <el-table-column
+                            prop="id"
+                            label="ID">
+                    </el-table-column>
+                    <el-table-column
+                            prop="img"
+                            label="用户头像">
+                        <template slot-scope="scope">
+                            <el-avatar :size="50"><img :src="scope.row.avator"/></el-avatar>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+
+                            prop="name"
+                            label="用户账号">
+                    </el-table-column>
+                    <el-table-column
+                            prop="nickname"
+                            label="用户昵称">
+                    </el-table-column>
+                    <el-table-column
+                            prop="role_name"
+                            label="用户角色">
+                    </el-table-column>
+                    <el-table-column
+                            prop="created_at"
+                            label="添加时间">
+                    </el-table-column>
+                    <el-table-column
+                            prop="updated_at"
+                            label="更新时间">
+                    </el-table-column>
+                    <el-table-column
+                            width="250px;"
+                            prop="id"
+                            label="操作">
+                        <template slot-scope="scope">
+                            <el-button @click="openSelfUrl('/setting_kefu_message?page=1&id='+scope.row.id)" type="primary" size="small" plain>查看消息</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                        background
+                        @current-change="kefuListAllPage"
+                        :current-page="kefuListAll.page"
+                        layout="prev,pager, next"
+                        :page-size="kefuListAll.pagesize"
+                        :total="kefuListAll.count">
+                </el-pagination>
+            </el-main>
+
+        </el-container>
+
+    </template>
+
+</div>
+</body>
+{{template "setting_bottom" .}}

@@ -1,0 +1,105 @@
+{{template "header" }}
+<style>
+    .sumNum{
+        margin: 10px 0;
+        font-size: 24px;
+        font-weight: bold;
+    }
+</style>
+<div id="app" style="width:100%">
+    <template>
+        <div v-loading.fullscreen.lock="fullscreenLoading">
+
+                <div class="mainMain settingMain settingDashbord">
+                    <h2 class="textDark">数据总览</h2>
+                    <el-row :gutter="10">
+                        <el-col :span="8">
+                            <el-card class="box-card">
+                                <div slot="header" class="clearfix">
+                                    <span>今日访客数</span>
+                                </div>
+                                <div class="text item">
+                                    <p class="sumNum" v-html="statistics.toady_visitors"></p>
+                                </div>
+                                <div class="text item">
+                                    <p>总访客数: <span  v-html="statistics.visitors"></span></p>
+                                </div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-card class="box-card">
+                                <div slot="header" class="clearfix">
+                                    <span>今日消息数</span>
+                                </div>
+                                <div class="text item">
+                                    <p class="sumNum" v-html="statistics.today_messages"></p>
+                                </div>
+                                <div class="text item">
+                                    <p>总消息数: <span  v-html="statistics.message"></span></p>
+                                </div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-card class="box-card">
+                                <div slot="header" class="clearfix">
+                                    <span>当前访客在线数量</span>
+                                </div>
+                                <div class="text item">
+                                    <p class="sumNum" v-html="statistics.visitor_session"></p>
+                                </div>
+                                <div class="text item">
+                                    <p>当前客服会话: <span  v-html="statistics.kefu_session"></span></p>
+                                </div>
+                            </el-card>
+                        </el-col>
+                    </el-row>
+                    <div style="height: 20px"></div>
+                    <el-row :gutter="10">
+                        <el-col :span="8">
+                            <el-card class="box-card">
+                                <div slot="header" class="clearfix">
+                                    <span>好评数</span>
+                                </div>
+                                <div class="text item">
+                                    <p class="sumNum" v-html="commentStatistics.good_num"></p>
+                                </div>
+                                <div class="text item">
+                                    <p>好评率: <span  v-html="commentStatistics.good_pre"></span>%</p>
+                                </div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-card class="box-card">
+                                <div slot="header" class="clearfix">
+                                    <span>中评数</span>
+                                </div>
+                                <div class="text item">
+                                    <p class="sumNum" v-html="commentStatistics.normal_num"></p>
+                                </div>
+                                <div class="text item">
+                                    <p>中评率: <span  v-html="commentStatistics.normal_pre"></span>%</p>
+                                </div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-card class="box-card">
+                                <div slot="header" class="clearfix">
+                                    <span>差评数</span>
+                                </div>
+                                <div class="text item">
+                                    <p class="sumNum" v-html="commentStatistics.bad_num"></p>
+                                </div>
+                                <div class="text item">
+                                    <p>差评率: <span  v-html="commentStatistics.bad_pre"></span>%</p>
+                                </div>
+                            </el-card>
+                        </el-col>
+                    </el-row>
+            </div>
+        </div>
+    </template>
+</div>
+</body>
+{{template "setting_bottom" .}}
+
+

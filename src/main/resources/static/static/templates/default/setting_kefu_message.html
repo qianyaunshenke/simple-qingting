@@ -1,0 +1,66 @@
+{{template "header" }}
+<div id="app" style="width:100%">
+    <template>
+        <el-container v-loading.fullscreen.lock="fullscreenLoading">
+
+            <el-main class="mainMain">
+                <el-table
+                        :data="kefuMessages.list"
+                        border
+                        style="width: 100%;">
+                    <el-table-column
+                            prop="img"
+                            label="客服">
+                        <template slot-scope="scope">
+                            <el-avatar :size="50"><img :title="scope.row.kefu_name" :src="scope.row.kefu_avator"/></el-avatar>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            width="100"
+                            prop="mes_type"
+                            label="消息来源">
+                        <template slot-scope="scope">
+                            <i style="font-size: 30px;" class="el-icon-back" v-if="scope.row.mes_type=='visitor'"></i>
+                            <i style="font-size: 30px;" class="el-icon-right" v-if="scope.row.mes_type=='kefu'"></i>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="img"
+                            label="访客">
+                        <template slot-scope="scope">
+                            <div  style="display: flex;align-items: center">
+                                <el-avatar :size="50"><img :title="scope.row.visitor_name" :src="scope.row.visitor_avator"/></el-avatar>
+                                &nbsp;<{scope.row.visitor_name}>
+                            </div>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                            width="350px"
+                            prop="content"
+                            label="内容">
+                        <template slot-scope="scope">
+                            <div v-html="scope.row.content"></div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="create_time"
+                            label="发送时间">
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                        background
+                        @current-change="kefuMessagesPage"
+                        :current-page="kefuMessages.page"
+                        layout="prev,pager, next"
+                        :page-size="kefuMessages.pagesize"
+                        :total="kefuMessages.count">
+                </el-pagination>
+            </el-main>
+
+        </el-container>
+    </template>
+
+</div>
+</body>
+{{template "setting_bottom" .}}

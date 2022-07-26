@@ -1,0 +1,62 @@
+{{define "nav"}}
+<div class="mainLeftMenu">
+    <div style="margin: 20px auto;">
+        <el-dropdown   @command="changeOnlineStatus">
+            <el-badge :type="onlineType" is-dot class="item">
+                <el-avatar   class="mainLogo"  title="智能客服多商户版" :size="45" :src="adminAvator"></el-avatar>
+            </el-badge>
+            <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item command="1">在线</el-dropdown-item>
+                <el-dropdown-item  command="2">离线</el-dropdown-item>
+            </el-dropdown-menu>
+        </el-dropdown>
+    </div>
+    <div class="menuLeftItem" v-on:click="openIframeUrl('/mainGuide')">
+        <i class="el-icon-house"></i>
+        <span slot="title"><{flyLang.home}></span>
+    </div>
+
+    <div class="menuLeftItem" v-on:click="haveNewMessage='';openIframeUrl('/chat_main')">
+        <el-badge :value="haveNewMessage" class="item">
+            <i class="el-icon-chat-dot-round"></i>
+        </el-badge>
+        <span slot="title"><{flyLang.chat}></span>
+    </div>
+
+    <div class="menuLeftItem" v-show="menuAdminShow" v-on:click="openIframeUrl('/setting_visitor_list')">
+        <i class="el-icon-user"></i>
+        <span slot="title">访客</span>
+    </div>
+    <div class="menuLeftItem" v-on:click="openIframeUrl('/setting_deploy')">
+        <i class="el-icon-notebook-2"></i>
+        <span slot="title">对接</span>
+    </div>
+    <div class="menuLeftItem" v-show="superShow"  v-on:click="openIframeUrl('/setting_kefu_list')">
+        <i class="el-icon-edit-outline"></i>
+        <span slot="title"><{flyLang.agentList}></span>
+    </div>
+
+    <div class="menuLeftItem" v-show="menuAdminShow"  v-on:click="openIframeUrl('/setting_configs')">
+        <i class="el-icon-setting"></i>
+        <span slot="title"><{flyLang.setting}></span>
+    </div>
+
+
+    <div class="menuLeftItem" v-on:click="openIframeUrl('/setting_welcome')">
+        <i class="el-icon-timer"></i>
+        <span slot="title">欢迎</span>
+    </div>
+
+    <div class="menuLeftItem" v-on:click="openIframeUrl('/setting')">
+        <i class="el-icon-menu"></i>
+        <span slot="title"><{flyLang.menu}></span>
+    </div>
+
+    <div  class="menuLeftItem menuLeftItemLogout" v-on:click="logout()">
+        <i class="el-icon-switch-button"></i>
+        <span slot="title"><{flyLang.logout}></span>
+    </div>
+
+</div>
+
+{{end}}

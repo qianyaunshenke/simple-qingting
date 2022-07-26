@@ -1,0 +1,111 @@
+<!DOCTYPE>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<html>
+<head>
+    <th:block th:include="include :: header('访客聊天室')"/>
+
+    <title>访客聊天室</title>
+    <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
+    <style>
+        body {
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-md-9">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title" id="talktitle"></h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well" id="log-container" style="height:400px;overflow-y:scroll">
+
+                    </div>
+                    <input type="text" id="myinfo" class="form-control col-md-12"/> <br>
+                    <button id="send" type="button" class="btn btn-primary">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:include="include :: footer"/>
+
+<script th:inline="javascript">
+
+    Date.prototype.format = function (fmt) {
+        var o = {
+            "M+": this.getMonth() + 1,                 //月份
+            "d+": this.getDate(),                    //日
+            "h+": this.getHours(),                   //小时
+            "m+": this.getMinutes(),                 //分
+            "s+": this.getSeconds(),                 //秒
+            "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+            "S": this.getMilliseconds()             //毫秒
+        };
+        if (/(y+)/.test(fmt)) {
+            fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+        }
+        for (var k in o) {
+            if (new RegExp("(" + k + ")").test(fmt)) {
+                fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+            }
+        }
+        return fmt;
+    }
+
+    var visitorName = [[${visitorName}]];
+    var visitorId = [[${visitorId}]];
+    var kefuId = [[${kefuId}]];
+
+    var prefix = ctx + "business/visitorChat";
+
+    $(function () {
+
+        // 指定websocket路径
+        var websocket;
+
+        if ('WebSocket' in window) {
+            websocket = new WebSocket("ws://192.168.10.143:8081/webSocket/" + visitorId);
+        }
+        websocket.onmessage = function (event) {
+            var data = JSON.parse(event.data);
+            if (data.to == 0) {//上线消息
+
+            } else if (data.to == -2) {//下线消息
+
+            } else {
+                // 普通消息
+                // 接收服务端的实时消息并添加到HTML页面中
+                $("#log-container").append("<div class='bg-info'><label class='text-danger'>" + data.from + "&nbsp;" + data.date + "</label><div class='text-success'>" + data.text + "</div></div><br>");
+                // 滚动条滚动到最低部
+                scrollToBottom();
+            }
+        };
+        $("#talktitle").text("与客服" + kefuId + "的聊天");
+
+
+        $("#send").click(function () {
+
+            var data = {};
+            data["from"] = visitorName;
+            data["to"] = kefuId;
+            data["text"] = $("#myinfo").val();
+            websocket.send(JSON.stringify(data));
+            $("#log-container").append("<div class='bg-success'><label class='text-info'>我&nbsp;" + new Date().format("yyyy-MM-dd hh:mm:ss") + "</label><div class='text-info'>" + $("#myinfo").val() + "</div></div><br>");
+            scrollToBottom();
+            $("#myinfo").val("");
+        });
+
+    })
+
+    function scrollToBottom() {
+        var div = document.getElementById('log-container');
+        div.scrollTop = div.scrollHeight;
+    }
+</script>
+
+</body>
+</html>

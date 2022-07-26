@@ -1,0 +1,63 @@
+{{template "header" }}
+<div id="app" style="width:100%">
+    <template>
+        <el-container>
+
+            <el-main class="mainMain" style="margin:0px 10px;">
+                <el-descriptions title="微信相关配置说明" style="margin-bottom: 10px;" direction="vertical" :column="2" border>
+                    <el-descriptions-item label="微信公众号填写服务器地址(url)"><{wechatServerUrl}></el-descriptions-item>
+                    <el-descriptions-item label="备注">
+                        <p>在公众号后台==>设置与开发==>基本配置==>服务器配置</p>
+                        <p>token值为自定义的文本，微信公众号与客服系统配置一致即可</p>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="微信访客地址"><{wechatVisitorUrl}></el-descriptions-item>
+                    <el-descriptions-item label="备注">
+                        <p>订阅号只能收消息及被动自动回复，不能主动发消息。公众号自2021-12-27起无法通过接口获取昵称头像。</p>
+                        <p>已认证服务号可通过此链接跳转网页授权oauth获取昵称头像等用户信息</p>
+                    </el-descriptions-item>
+                </el-descriptions>
+                <div class="el-descriptions__title">全部配置参数列表</div>
+                <el-table
+                        :data="entConfigList"
+                        border
+                        style="width: 100%;margin-top: 10px;">
+                    <el-table-column
+                            prop="conf_name"
+                            label="配置参数">
+                        <template slot-scope="scope">
+                            <div v-html="scope.row.conf_name"></div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="conf_value"
+                            label="配置值">
+                        <template slot-scope="scope">
+                            <el-upload
+                                    v-if="scope.row.conf_key=='WechatAuthFile'"
+                                    class="upload-demo"
+                                    :action="uploadWechatUrl"
+                                    :on-success="uploadWechatAuthfileCallback"
+                                    multiple>
+                                <el-button size="small" type="primary">点击上传</el-button>
+                                <div slot="tip" class="el-upload__tip">只能上传txt文件，且不超过500kb</div>
+                            </el-upload>
+                            <el-input v-model="scope.row.conf_value"></el-input>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            width="250px;"
+                            prop="id"
+                            label="操作">
+                        <template slot-scope="scope">
+                            <el-button  @click="setEntConfigItem(scope.row.conf_name,scope.row.conf_key,scope.row.conf_value)" type="primary" size="small" icon="el-icon-refresh-left" circle></el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </el-main>
+
+        </el-container>
+    </template>
+
+</div>
+</body>
+{{template "setting_bottom" .}}

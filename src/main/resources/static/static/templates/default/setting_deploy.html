@@ -1,0 +1,142 @@
+{{template "header" }}
+<link rel="stylesheet" href="/static/css/bootstrap.min.css">
+<div id="deployBox" style="width:100%">
+    <template>
+        <el-container>
+            <el-main class="mainMain">
+
+                <el-tabs>
+                    <el-tab-pane label="独立链接模式">
+
+                        <el-descriptions style="margin-bottom: 10px;" direction="vertical" :column="2" border>
+                            <el-descriptions-item label="独立访客链接">
+                                <p>可以随意放置下面的访客链接，例如：<a :href="visitorUrl" target="_blank">在线客服</a></p>
+                                <p>1. 如果要传递绑定自有会员，可以传递以下参数：
+                                visitor_id=自有会员唯一ID&visitor_name=自有会员名称&avator=头像地址&extra=扩展信息</p>
+                                <p>2. 如果需要传递产品信息，将base64加密的json字符串作为extra参数传递，可以参考下面json:</p>
+                                <p>base64加密({"visitorProduct":{"title":"纯坚果零食大礼包一整箱干果类网红爆款解馋小吃休闲食品送女友","price":"￥9.9","img":"https://img.alicdn.com/bao/uploaded/i1/2201453915278/O1CN01dZolFu1orN8dFeKAj_!!0-item_pic.jpg_200x200q90.jpg_.webp","url":"https://www.taobao.com"}})</p>
+
+
+                            </el-descriptions-item>
+                            <el-descriptions-item label="二维码">访客访问或微信扫描二维码,直接进行沟通</el-descriptions-item>
+                            <el-descriptions-item label="访客链接"><{host}>/chatIndex?kefu_id=<{kefuName}>&ent_id=<{entId}></el-descriptions-item>
+                            <el-descriptions-item label="访客链接二维码"><img :src="visitorQrcode" width="180"/></el-descriptions-item>
+                            <el-descriptions-item label="微信访客链接">
+                                请先进行微信公众号相关配置,访客扫描或访问后调用微信网页oauth授权,可以获取到昵称头像<br/>
+                                <{host}>/wechatIndex?kefu_id=<{kefuName}>&ent_id=<{entId}></el-descriptions-item>
+                            <el-descriptions-item label="微信访客链接二维码"><img :src="wechatVisitorQrcode" width="180"/></el-descriptions-item>
+
+                            <el-descriptions-item label="微信与客服绑定">请先进行微信公众号相关配置，客服扫描绑定公众号，可以收到访客上线/消息提醒</el-descriptions-item>
+                            <el-descriptions-item label="微信与客服绑定二维码"><img :src="wechatKefuQrcode" width="180"/></el-descriptions-item>
+
+                        </el-descriptions>
+                    </el-tab-pane>
+                    <el-tab-pane label="右下角弹窗模式">
+
+                        <el-descriptions style="margin-bottom: 10px;" direction="vertical" :column="1" border>
+                            <el-descriptions-item label="右下角图标展示">
+                                把以下代码复制到页面html的body块中，点击查看<a target="_blank" :href="'/deploy?siteUrl='+host+'&kefuName='+kefuName+'&entId='+entId">演示页面</a>
+                            </el-descriptions-item>
+                            <el-descriptions-item label="代码">
+                                <textarea class="deployLink" style="height: 300px;">
+<script src="<{host}>/static/js/kefu-front.js"></script>
+<script>
+    KEFU.init({
+        KEFU_URL:"<{host}>",
+        KEFU_KEFU_ID: "<{kefuName}>",
+        KEFU_ENT: "<{entId}>",
+        KEFU_LANG:"cn",
+        KEFU_SHOW_TYPES:2,
+        KEFU_AUTO_OPEN:false,
+    })
+</script>
+                       </textarea>
+                            </el-descriptions-item>
+                            <el-descriptions-item label="解释">
+                                KEFU_URL: 网站的URL地址，例如 https://www.baidu.com<br/>
+                                KEFU_KEFU_ID:  客服账号用户名<br/>
+                                KEFU_ENT: 客服的商户ID<br/>
+                                KEFU_LANG:  cn 中文 ， en英文<br/>
+                                KEFU_SHOW_TYPES: 展示样式，1：普通右下角，2：圆形icon<br/>
+                                KEFU_AUTO_OPEN: true 自动展开，false 不自动<br/>
+                            </el-descriptions-item>
+                        </el-descriptions>
+
+
+                    </el-tab-pane>
+
+                </el-tabs>
+
+            </el-main>
+
+        </el-container>
+    </template>
+
+</div>
+</body>
+<script>
+    new Vue({
+        el: '#deployBox',
+        delimiters:["<{","}>"],
+        data: {
+            window:window,
+            host:getBaseUrl(),
+            kefuId:"",
+            entId:"",
+            nickname:"",
+            kefuName:"",
+            versionName:"",
+            visitorQrcode:"",
+            visitorUrl:"",
+            wechatVisitorUrl:"",
+            wechatVisitorQrcode:"",
+            wechatKefuQrcode:"",
+            wechatMenuUrl:""
+        },
+        methods: {
+
+            kefuInfo() {
+                var _this = this;
+                sendAjax("/kefu/kefuinfo","get",{},function (data) {
+                    if (data.code != 200) {
+                        window.location.href = "/login";
+                    } else {
+                        var result = data.result;
+                        _this.kefuId = result.id;
+                        _this.entId = result.ent_id;
+                        _this.kefuName = result.name;
+                        _this.nickname = result.nickname;
+                        _this.visitorUrl=_this.host+'/chatIndex?kefu_id='+result.name+'&ent_id='+result.ent_id;
+                        var visitorUrlTxt=_this.host+'/chatIndex?kefu_id='+result.name+'%26ent_id='+result.ent_id;
+                        _this.visitorQrcode=_this.host+"/kefu/qrcode?str="+visitorUrlTxt+"&token="+localStorage.getItem("token");
+                        _this.wechatMenuUrl=_this.host+'/wechatIndex?ent_id='+result.ent_id+'%26kefu_id='+result.name;
+                        _this.wechatVisitorQrcode=_this.host+"/kefu/qrcode?str="+_this.wechatMenuUrl+"&token="+localStorage.getItem("token");
+                        _this.getWechatKefuQrcode();
+                    }
+                });
+
+
+            },
+            getWechatKefuQrcode(){
+                var _this=this;
+                sendAjax("/wechat/showQrcode","get",{entId:this.entId,sceneName:this.kefuName},function(result){
+                    if(result.code==200){
+                        _this.wechatKefuQrcode=result.result.url
+                    }
+                });
+            },
+            handleTabClick(tab, event){
+                let _this=this;
+                if(tab.name=="wechat"){
+
+                }
+            },
+        },
+        mounted:function(){
+        },
+        created: function () {
+            this.kefuInfo();
+        }
+    })
+</script>
+{{template "setting_bottom" .}}

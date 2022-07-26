@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.devops.project.business.mapper.VisitorMapper">
+    
+    <resultMap type="com.devops.project.business.domain.Visitor" id="VisitorResult">
+        <result property="id"    column="id"    />
+        <result property="name"    column="name"    />
+        <result property="realName"    column="real_name"    />
+        <result property="avator"    column="avator"    />
+        <result property="sourceIp"    column="source_ip"    />
+        <result property="toId"    column="to_id"    />
+        <result property="createdAt"    column="created_at"    />
+        <result property="updatedAt"    column="updated_at"    />
+        <result property="deletedAt"    column="deleted_at"    />
+        <result property="visitorId"    column="visitor_id"    />
+        <result property="status"    column="status"    />
+        <result property="refer"    column="refer"    />
+        <result property="city"    column="city"    />
+        <result property="clientIp"    column="client_ip"    />
+        <result property="extra"    column="extra"    />
+        <result property="entId"    column="ent_id"    />
+        <result property="visitNum"    column="visit_num"    />
+    </resultMap>
+
+    <sql id="selectVisitorVo">
+        select id, name, real_name, avator, source_ip, to_id, created_at, updated_at, deleted_at, visitor_id, status, refer, city, client_ip, extra, ent_id, visit_num from visitor
+    </sql>
+
+    <select id="selectVisitorList" parameterType="com.devops.project.business.domain.Visitor" resultMap="VisitorResult">
+        <include refid="selectVisitorVo"/>
+        <where>  
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+            <if test="realName != null  and realName != ''"> and real_name like concat('%', #{realName}, '%')</if>
+            <if test="avator != null  and avator != ''"> and avator = #{avator}</if>
+            <if test="sourceIp != null  and sourceIp != ''"> and source_ip = #{sourceIp}</if>
+            <if test="toId != null  and toId != ''"> and to_id = #{toId}</if>
+            <if test="createdAt != null "> and created_at = #{createdAt}</if>
+            <if test="updatedAt != null "> and updated_at = #{updatedAt}</if>
+            <if test="deletedAt != null "> and deleted_at = #{deletedAt}</if>
+            <if test="visitorId != null  and visitorId != ''"> and visitor_id = #{visitorId}</if>
+            <if test="status != null "> and status = #{status}</if>
+            <if test="refer != null  and refer != ''"> and refer = #{refer}</if>
+            <if test="city != null  and city != ''"> and city = #{city}</if>
+            <if test="clientIp != null  and clientIp != ''"> and client_ip = #{clientIp}</if>
+            <if test="extra != null  and extra != ''"> and extra = #{extra}</if>
+            <if test="entId != null "> and ent_id = #{entId}</if>
+            <if test="visitNum != null "> and visit_num = #{visitNum}</if>
+        </where>
+        order by created_at desc
+    </select>
+
+
+    <delete id="deleteVisitorByIds" parameterType="String">
+        delete from visitor where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+
+</mapper>

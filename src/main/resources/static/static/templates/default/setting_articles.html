@@ -1,0 +1,129 @@
+{{template "header" }}
+<div id="app" style="width:100%">
+    <template>
+        <el-container v-loading.fullscreen.lock="fullscreenLoading">
+            <el-main class="mainMain">
+                <el-row :gutter="2">
+                    <el-col :span="6">
+                        <el-button style="margin-bottom: 10px;" @click="addCate" type="primary" size="small"><{flyLang.newCate}></el-button>
+                        <el-table
+                                @row-click="setArticleCate"
+                                :data="articleCate"
+                                border
+                                style="width: 100%;">
+                            <el-table-column
+                                    fixed="right"
+                                    :label="flyLang.categories">
+                                <template slot-scope="scope">
+
+                                    <el-popover trigger="hover" placement="left">
+                                        <el-button v-show="scope.row.is_top!=1" @click="setArticleCateTop(scope.row.id,1)"  type="success" size="mini">置顶</el-button>
+                                        <el-button v-show="scope.row.is_top==1" @click="setArticleCateTop(scope.row.id,2)"  type="info" size="mini">取消置顶</el-button>
+                                        <el-button @click="delArticleCate(scope.row.id)"  type="danger" size="mini">删除</el-button>
+                                        <div slot="reference" class="name-wrapper">
+                                            <{ scope.row.cat_name }>
+                                        </div>
+                                    </el-popover>
+
+
+                                </template>
+                            </el-table-column>
+
+                        </el-table>
+
+                    </el-col>
+                    <el-col :span="18">
+                        <el-button style="margin-bottom: 10px;" @click="articleDialog=true" type="primary" size="small">添加回复</el-button>
+                        <el-table
+                                :data="articleList.list"
+                                border
+                                style="width: 100%;">
+                            <el-table-column
+                                    prop="title"
+                                    label="关键词">
+                            </el-table-column>
+                            <el-table-column
+                                    label="回复内容">
+                                <template slot-scope="scope">
+                                        <div v-html="scope.row.content">
+                                        </div>
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                    prop="user_id"
+                                    label="user_id">
+                            </el-table-column>
+                            <el-table-column
+                                    width="160px;"
+                                    prop="id"
+                                    label="操作">
+                                <template slot-scope="scope">
+                                    <el-button @click="article=scope.row;articleDialog=true"  type="primary" size="small" icon="el-icon-edit" circle></el-button>
+                                    <el-button @click="delArticle(scope.row.id)"  type="danger" size="small" icon="el-icon-delete" circle></el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+
+                        <el-pagination
+                                background
+                                @current-change="getArticle"
+                                :current-page="articleList.page"
+                                layout="prev,pager, next"
+                                :page-size="articleList.pagesize"
+                                :total="articleList.count">
+                        </el-pagination>
+                    </el-col>
+                </el-row>
+            </el-main>
+        </el-container>
+        <el-dialog
+                :title="flyLang.newCate"
+                :visible.sync="cateDialog"
+                width="30%"
+                top="0"
+                :close-on-click-modal="false"
+        >
+            <el-form label-width="70px">
+                <el-form-item :label="flyLang.name"  prop="cat_name">
+                    <el-input v-model="cateForm.cat_name"></el-input>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="cateDialog = false"><{flyLang.cancel}></el-button>
+                <el-button type="primary" @click="addArticleCate"><{flyLang.save}></el-button>
+              </span>
+        </el-dialog>
+
+        <el-dialog
+                title="编辑"
+                :visible.sync="articleDialog"
+                width="50%"
+                height="600px"
+                top="0"
+                :close-on-click-modal="false"
+                @opened="initEditor()"
+                @closed="destoryEditor()"
+        >
+            <el-input style="margin-bottom: 10px;" placeholder="多个关键词以英文逗号,分割"  v-model="article.title"></el-input>
+            <el-select v-model="article.cat_id" placeholder="选择分类(必选)" style="margin-bottom: 10px;">
+                <el-option
+                        v-for="item in articleCate"
+                        :key="item.id"
+                        :label="item.cat_name"
+                        :value="item.id">
+                </el-option>
+            </el-select>
+
+            <div id="welcomeEditor" v-html="article.content"></div>
+            
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="articleDialog = false"><{flyLang.cancel}></el-button>
+                <el-button @click="addArticle"><{flyLang.save}></el-button>
+              </span>
+        </el-dialog>
+    </template>
+
+</div>
+</body>
+<script src="/static/js/wangEditor.min.js"></script>
+{{template "setting_bottom" .}}

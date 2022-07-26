@@ -1,0 +1,167 @@
+package ${packageName}.service.impl;
+
+import java.util.List;
+#if($table.tree)
+import java.util.ArrayList;
+#end
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.stereotype.Service;
+#if($table.sub)
+import com.exam.ems.common.utils.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
+import ${packageName}.domain.${subClassName};
+#end
+import ${packageName}.mapper.${ClassName}Mapper;
+import ${packageName}.domain.${ClassName};
+import ${packageName}.service.I${ClassName}Service;
+import com.devops.common.utils.text.Convert;
+/**
+ * ${functionName}Service业务层处理
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+@Service
+public class ${ClassName}ServiceImpl extends ServiceImpl<${ClassName}Mapper, ${ClassName}> implements I${ClassName}Service {
+
+
+    /**
+     * 查询${functionName}列表
+     *
+     * @param ${className} ${functionName}
+     * @return ${functionName}
+     */
+    @Override
+    public List<${ClassName}> select${ClassName}List(${ClassName} ${className}) {
+        return getBaseMapper().select${ClassName}List(${className});
+    }
+
+#if($table.sub)
+    /**
+     * 新增${functionName}
+     *
+     * @param ${className} ${functionName}
+     * @return 结果
+     */
+    @Override @Transactional
+    public int insert${ClassName}(${ClassName} ${className}) {
+            #foreach ($column in $columns)
+                #if($column.javaField == 'createTime')
+                    ${className}.setCreateTime(DateUtils.getNowDate());
+                #end
+            #end
+        #if($table.sub)
+            int rows = getBaseMapper().insert(${className});
+            insert${subClassName}(${className});
+            return rows;
+        #end
+    }
+#end
+
+#if($table.sub)
+    /**
+     * 修改${functionName}
+     *
+     * @param ${className} ${functionName}
+     * @return 结果
+     */
+    @Override @Transactional
+    public int update${ClassName}(${ClassName} ${className}) {
+        #foreach ($column in $columns)
+            #if($column.javaField == 'updateTime')
+                ${className}.setUpdateTime(DateUtils.getNowDate());
+            #end
+        #end
+        #if($table.sub)
+            getBaseMapper().delete${subClassName}By${subTableFkClassName}(${className}.get${pkColumn.capJavaField}());
+            insert${subClassName}(${className});
+        #end
+        return getBaseMapper().updateById(${className});
+    }
+#end
+
+
+
+    /**
+     * 删除${functionName}对象
+     *
+     * @param ids 需要删除的数据ID
+     * @return 结果
+     */
+#if($table.sub)
+     @Transactional
+#end
+    @Override
+    public int delete${ClassName}ByIds(String ids) {
+#if($table.sub)
+        getBaseMapper().delete${subClassName}By${subTableFkClassName}s(Convert.toStrArray(ids));
+#end
+        return getBaseMapper().delete${ClassName}ByIds(Convert.toStrArray(ids));
+    }
+
+#if($table.sub)
+    /**
+     * 删除${functionName}信息
+     *
+     * @param ${pkColumn.javaField} ${functionName}ID
+     * @return 结果
+     */
+    @Override
+    public int delete${ClassName}ById(${pkColumn.javaType} ${pkColumn.javaField}) {
+#if($table.sub)
+        getBaseMapper().delete${subClassName}By${subTableFkClassName}(${pkColumn.javaField});
+#end
+        return getBaseMapper().deleteById(${pkColumn.javaField});
+    }
+#end
+
+
+
+    #if($table.tree)
+        /**
+         * 查询${functionName}树列表
+         *
+         * @return 所有${functionName}信息
+         */
+        @Override
+        public List<Ztree> select${ClassName}Tree() {
+            List<${ClassName}> ${className}List = getBaseMapper().select${ClassName}List(new ${ClassName}());
+            List<Ztree> ztrees = new ArrayList<Ztree>();
+            for (${ClassName} ${className} :${className}List){
+                Ztree ztree = new Ztree();
+                #set($TreeCode=$treeCode.substring(0,1).toUpperCase() + ${treeCode.substring(1)})
+                #set($TreeParentCode=$treeParentCode.substring(0,1).toUpperCase() + ${treeParentCode.substring(1)})
+                #set($TreeName=$treeName.substring(0,1).toUpperCase() + ${treeName.substring(1)})
+                ztree.setId(${className}.get${TreeCode}());
+                ztree.setpId(${className}.get${TreeParentCode}());
+                ztree.setName(${className}.get${TreeName}());
+                ztree.setTitle(${className}.get${TreeName}());
+                ztrees.add(ztree);
+            }
+            return ztrees;
+        }
+    #end
+    #if($table.sub)
+
+        /**
+         * 新增${subTable.functionName}信息
+         *
+         * @param ${className} ${functionName}对象
+         */
+        public void insert${subClassName}(${ClassName} ${className}) {
+            List<${subClassName}> ${subclassName}List = ${className}.get${subClassName}List();
+            Long ${pkColumn.javaField} = ${className}.get${pkColumn.capJavaField}();
+            if (StringUtils.isNotNull(${subclassName}List)) {
+                List<${subClassName}> list = new ArrayList<${subClassName}>();
+                for (${subClassName} ${subclassName} :${subclassName}List){
+                    ${subclassName}.set${subTableFkClassName}(${pkColumn.javaField});
+                    list.add(${subclassName});
+                }
+                if (list.size() > 0) {
+                    getBaseMapper().batch${subClassName}(list);
+                }
+            }
+        }
+    #end
+
+}

@@ -1,0 +1,79 @@
+<html lang="cn">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" name="viewport" />
+    <meta name="keywords" content="开源客服系统,在线客服,免费客服系统,客服系统"/>
+    <meta name="description" content="支持文字/表情/图片/文件发送,支持快捷回复,支持IP黑名单,展示访客信息,后台权限控制"/>
+    <title>互动聊天</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/element-ui/2.15.1/theme-chalk/index.min.css">
+    <script src="https://cdn.staticfile.org/vue/2.6.11/vue.min.js"></script>
+    <script src="https://cdn.staticfile.org/element-ui/2.15.1/index.js"></script>
+    <script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/static/js/functions.js?v=0.4.1"></script>
+    <link rel="stylesheet" href="/static/css/front.css?v=1.0.0" />
+    <link rel="stylesheet" href="/static/css/common.css?v=0.4.1" />
+    <link rel="stylesheet" href="/static/css/icono.min.css" />
+</head>
+<body>
+<div id="app"  class="chatRoomCenter">
+    <template>
+        <!--客服代码-->
+        <div class="chatContext chatRoomMessageBox" v-loading.fullscreen.lock="fullscreenLoading" v-on:click="showFaceIcon=false">
+            <div class="chatBox">
+                <el-row :gutter="2" v-for="v in msgList" >
+                    <el-col :span="3"><el-avatar shape="square" :size="36" :src="v.avator"></el-avatar></el-col>
+                    <el-col :span="21">
+                        <div class="chatUser"><{v.name}></div>
+                        <div class="chatContent" v-html="v.content"></div>
+                    </el-col>
+                    <div class="clear"></div>
+                </el-row>
+
+            </div>
+        </div>
+        <div class="chatRoomSendBox">
+            <div class="iconBtns">
+                <div v-on:click="showFaceIcon==true?showFaceIcon=false:showFaceIcon=true" :title="flyLang.emotions" class="icono-smile visitorIconBtns visitorFaceBtn"></div>
+                <div class="clear"></div>
+            </div>
+            <el-input  v-model="messageContent"   v-on:keyup.enter.native="chatToUser" :placeholder="flyLang.textarea">
+                <el-button slot="append" :disabled="sendDisabled||messageContent==''" v-on:click="chatToUser"><{flyLang.sent}></el-button>
+            </el-input>
+            <div class="faceBox visitorFaceBox" v-if="showFaceIcon">
+                <ul class="faceBoxList">
+                    <li v-on:click="faceIconClick(i)" class="faceIcon" v-for="(v,i) in face"  :title="v.name"><img :src=v.path></li>
+                </ul>
+                <div class="clear"></div>
+            </div>
+        </div>
+        <!--//客服代码-->
+        <audio id="chatMessageAudio">
+            <source id="chatMessageAudioSource"  />
+        </audio>
+        <audio id="chatMessageSendAudio">
+            <source id="chatMessageSendAudioSource"  />
+        </audio>
+
+        <el-dialog  :visible.sync="nameDialog"
+                    :close-on-click-modal="false"
+                    :show-close="false"
+        >
+            <el-form>
+                <el-form-item label="您的称呼">
+                    <el-input v-model="nickname" autocomplete="off"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button type="primary" @click="startChat();">确 定</el-button>
+            </div>
+        </el-dialog>
+    </template>
+</div>
+</body>
+<script src="/static/js/reconnecting-websocket.min.js"></script>
+<script>
+    var LANG=checkLang();
+</script>
+<script src="/static/js/chat-lang.js?v=0.4.1"></script>
+<script src="/static/js/chat-room.js?v=0.4.1"></script>
+</html>

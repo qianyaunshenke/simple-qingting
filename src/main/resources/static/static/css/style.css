@@ -1,0 +1,444 @@
+html {
+    font-size:62.5%;/*10 ÷ 16 × 100% = 62.5%*/
+}
+.tsh-nav{
+    height: 60px;
+    font-size: 18px;
+    background: rgba(0,0,0,0.4);;
+}
+@media screen and (max-width:900px){
+    .tsh-nav .navbar-nav{
+        background: rgba(0,0,0,0.4);;
+    }
+}
+
+.tsh-nav .logo{
+    font-size: 26px;
+}
+.tsh-nav .logo:hover{
+    border-bottom: none;
+}
+.tsh-nav a {
+    color: #fff;
+    padding: 0px 15px;
+    text-decoration: none;
+    height: 60px;
+    display: inline-block;
+    line-height: 60px;
+}
+.tsh-nav a:hover{
+    border-bottom: 4px solid #fff;
+    text-decoration: none;
+}
+.tsh-nav .nav-item{
+    margin-left: 20px;
+}
+/*视频*/
+.banner_area {
+    display: block;
+    width: 100%;
+    position: relative;
+    margin-top: -40px;
+    overflow: hidden;
+    height: 980px;
+}
+
+.banner_txt {
+    display: block;
+    width: 840px;
+    height: 81px;
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    z-index: 2;
+    text-align: center;
+    transform: translate(-50%,-50%);
+    -webkit-transform: translate(-50%,-50%);
+    font-family: 'TencentSansw3';
+    letter-spacing: 18px;
+}
+.banner_txt .txtbox p {
+    display: inline-block;
+    color: #fff;
+    font-size: 3.6vw;
+}
+.video1 {
+    width: 2560px;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    margin-left: -1280px;
+    z-index: 1;
+}
+@media screen and (max-width: 768px){
+    .video1 {
+        height: 640px;
+    }
+    .banner_area {
+        height: 640px;
+    }
+}
+.margin-top90{
+    margin-top: 90px!important;
+}
+.margin-top150{
+    margin-top: 150px!important;
+}
+header.masthead {
+    position: relative;
+    padding-top: 10.5rem;
+    padding-bottom: 6rem;
+    text-align: center;
+    color: #fff;
+    background: #3a73ee;
+}
+header.wave:after{
+    position: absolute;
+    bottom: 0;
+    content: ' ';
+    left: 0;
+    width: 100%;
+    height: 48px;
+    margin-top: -48px;
+    background-image: url(../images/wave.svg);
+    background-size: cover;
+}
+header.masthead .btn{
+    font-size: 14px;
+    padding: 10px 20px;
+}
+header.masthead .useBtn{
+    background: #ff7243;
+}
+header.masthead .buyBtn{
+    background: #00c853;
+}
+header.masthead .masthead-subheading {
+    font-size: 1.5rem;
+    font-style: italic;
+    line-height: 1.5rem;
+    margin-bottom: 25px;
+    font-family: "Droid Serif", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+header.masthead .masthead-heading {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 2.25rem;
+    margin-bottom: 2rem;
+    font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+
+.preview{
+    background: url(../images/pc.png) no-repeat top center;
+    height: 617px;
+    padding-top: 24px;
+}
+.install {
+    font-weight: 900;
+    max-width: 90%;
+    margin: 15px auto;
+    color: #5fbc0e;
+    background: #000;
+    background: rgba(0, 0, 0, 0.6);
+    line-height: 1.3;
+    padding: 18px 20px;
+    position: relative;
+    border-radius: 3px;
+    box-sizing: content-box;
+}
+.install small {
+    color: #aaa;
+    font-weight: normal;
+}
+.jumbotron {
+    display: block;
+    width: 814px;
+    margin:0 auto;
+}
+.btn-info {
+    color: #fff;
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+.btn-info:hover {
+    color: #fff;
+    background-color: #138496;
+    border-color: #117a8b;
+    text-decoration: none;
+}
+.btn-info:focus, .btn-info.focus {
+    color: #fff;
+    background-color: #138496;
+    border-color: #117a8b;
+    box-shadow: 0 0 0 0.2rem rgba(58, 176, 195, 0.5);
+}
+
+
+@media only screen and (min-width: 1023px){
+    #install .pre-container {
+        width: 50%;
+    }
+}
+
+
+*{
+    margin: 0;padding: 0;
+}
+a {
+    text-decoration: none;
+    color: #3973ac;
+}
+a:hover {
+    text-decoration: underline;
+}
+pre{
+    background:#f9f9f9;
+    color: #d73a49;
+    line-height: 24px;
+    border: 1px solid #e8e8e8;
+    padding: 5px!important;
+}
+pre.updateLog{
+    background-color: #f3f7fc;
+    border:none;
+    color: #444;
+    line-height: 30px;
+    padding: 5px 10px!important;
+}
+.header{
+    background-color: #fff;
+    color: #fff;
+    width: 100%;
+    z-index: 100;
+}
+
+.header .logo{
+    margin: 0;
+    float: left;
+    font-size: 32px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+.header a{
+    color: #828282;
+    font-weight: bold;
+    font-family: "Microsoft JhengHei";
+    text-decoration: none;
+}
+.header .logo a{
+    font-size: 30px;
+    text-decoration: none;
+}
+.header .logo img{
+    width: 120px;
+}
+.header .navBtn{
+    float: right;
+    margin:30px 0 30px 20px;
+    display: inline-block;
+}
+.banner{
+    text-align: center;
+    color: #fff;
+    background-color: #3385ff;
+    padding: 20px 10px;
+    font-size: 18px;
+    line-height: 28px;
+}
+.banner h1 {
+    font-size: 34px;
+    margin: 20px 0px;
+    line-height: 45px;
+    font-weight: 500;
+    font-family: Helvetica Neue,Helvetica,PingFang SC,Hiragino Sans GB,Microsoft YaHei,SimSun,sans-serif;
+}
+.banner p{
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.banner .downloadBtn{margin-top: 20px;}
+.downloadBtn{display:inline-block;text-decoration:none;color:#fff;border:1px solid #fff;padding:10px 15px;border-radius:5px;}
+.downloadBtn:hover{background:#fff;color:#20b2bb;text-decoration: none;}
+
+
+
+.copyright{
+    font-size: 14px;
+    color: #333;
+    text-align: center;
+    padding: 10px;
+}
+.links{
+    margin-top: 20px;
+}
+.links a{
+    color: #20b2bb;
+    line-height: 23px;
+    margin: 5px;
+}
+.main{
+    background: #f6f8f9;
+}
+.mainIntro{
+    background: #fff;
+    box-shadow: 0 1px 5px 0 rgba(0,0,0,.05);
+    margin: 20px auto;
+}
+.product{
+    padding: 10px;
+}
+.product p{
+    margin: 10px 0px;
+    line-height: 30px;
+}
+.product h3,.product h4{
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e6e6e6;
+}
+.miniTitle{
+    padding: 10px;
+    font-size: 14px;
+    font-weight: normal;
+    border-left: 2px #3385ff solid;
+    background: #e6e6e6;
+    margin: 10px 0px;
+}
+.subTitle{
+    text-align: center;
+}
+.subTitle p{
+    font-size: 16px;
+    color: #919191;
+}
+
+.productContent{
+    color: #444;
+    font-size: 14px;
+    line-height: 30px;
+    margin-top: 10px;
+}
+.productContent ol{
+    margin: 0px 15px;
+}
+.productPost li{
+    list-style: none;
+}
+.productContent a{
+    color: #3973ac;
+    text-decoration: none;
+}
+.productContent a:hover{
+    text-decoration: underline;
+}
+.productImg{
+    width: 970px;
+}
+
+@media screen and (max-width: 1200px) {
+    .productImg{
+        width: 100%;
+    }
+}
+.productCardLeft{
+    width: 49%;
+    float: left;
+}
+.productCardRight{
+    width: 49%;
+    float: right;
+}
+.clear{clear:both}
+.links{
+    margin-top: 20px;
+}
+.links a{
+    color: #20b2bb;
+    line-height: 23px;
+    margin: 5px;
+}
+
+footer.footer {
+    width: 100%;
+    color: #aaa;
+    background: #1f2730;
+    text-align: left;
+    padding:10px;
+}
+footer.footer ul {
+    margin:10px 0px;
+    list-style: none;
+}
+footer.footer ul li{
+    list-style: none;
+}
+footer.footer ul li.f-tit {
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #fff;
+}
+footer.footer a {
+    color: #aaa;
+}
+footer.footer .address {
+    line-height: 50px;
+    text-align: center;
+    background: #161e26;
+    margin: 0;
+}
+.feature-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: 1rem;
+    font-size: 2rem;
+    color: #fff;
+    border-radius: .75rem;
+}
+.bi {
+    vertical-align: -.125em;
+    fill: currentColor;
+}
+
+a.ljxq {
+    color: #ffffff;
+    letter-spacing: 3px;
+    padding: 8px 15px;
+    line-height: 5;
+    font-size: 16px;
+}
+a.ljxq {
+    color: #ffffff;
+    letter-spacing: 3px;
+    padding: 8px 15px;
+    line-height: 5;
+    font-size: 16px;
+}
+a.ljxq:hover{
+    background-color: rgba(255,255,255,0.5);
+    text-decoration: none;
+}
+.introduce{
+    font-size: 20px;
+    text-indent: 2em;
+    line-height: 1.8;
+    margin: 0 auto;
+    padding: 10px;
+    text-align: center;
+}
+.introduce p{
+    margin:20px 0px;
+}
+.introduce span{
+    font-weight: bold;
+    color: #f19413;
+}
+.introduceTitle{
+    pdding-top: 20px;
+    text-align: center;
+    font-size: 48px;
+    padding-bottom: 10px;
+    letter-spacing: 5px;
+}

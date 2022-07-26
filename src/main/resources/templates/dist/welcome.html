@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <title>独立私有化智能在线客服系统</title>
+    <link rel="stylesheet" type="text/css" href="../../static/static/css/bootstrap.min.css?v=0.5.5" />
+</head>
+<body>
+<style>
+    .deployLink {
+        width: 800px;
+        margin: 150px auto;
+        background-color: #ecf5ff;
+        padding: 25px;
+        color: #0061c5;
+        border: 1px solid #d9ecff;
+        line-height: 20px;
+        font-size: 12px;
+        font-size: 20px;
+    }
+</style>
+<div class="deployLink">
+<h1>智能在线客服系统，欢迎您</h1>
+
+<a class="btn btn-primary mt-4" href="/chatIndex?ent_id=2&kefu_id=kefu2" target="_blank">访客地址</a>
+<a class="btn btn-primary mt-4" href="/login" target="_blank">登录后台</a>
+</div>
+
+
+<script src="/static/js/kefu-front.js"></script>
+<script>
+    KEFU.init({
+        KEFU_URL:"",//必填
+        KEFU_KEFU_ID: "kefu2",//必填
+        KEFU_ENT: 2,//必填
+        KEFU_LANG:"cn",//cn中文，en英文
+        KEFU_SHOW_TYPES:1,//展示样式，1：普通右下角，2：圆形icon
+        KEFU_AUTO_OPEN:true,//是否自动展开
+    })
+</script>
+
+</body>
+</html>

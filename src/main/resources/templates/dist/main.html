@@ -1,0 +1,235 @@
+<html lang="cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <title>{{.SystemTitle}}</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/element-ui/2.15.1/theme-chalk/index.min.css">
+    <script src="https://cdn.staticfile.org/vue/2.6.11/vue.min.js"></script>
+    <script src="https://cdn.staticfile.org/element-ui/2.15.1/index.js"></script>
+    <script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="/static/css/common.css?v=0.6.1">
+    <script src="/static/js/reconnecting-websocket.min.js"></script>
+    <script src="/static/js/functions.js"></script>
+    <script src="/static/js/chat-lang.js?v=1.0.1"></script>
+    <link rel="icon" href="/static/images/favicon.ico">
+</head>
+<body class="text-center">
+<div id="app">
+    <template>
+        {{template "nav" }}
+        <div class="mainRight">
+
+            <iframe class="mainIframe"  v-bind:src="iframeUrl" frameborder="0"></iframe>
+        </div>
+        <audio id="chatMessageAudio">
+            <source id="chatMessageAudioSource" src="/static/images/alert2.ogg" type="audio/mpeg" />
+        </audio>
+    </template>
+</div>
+</body>
+{{.SystemKefu}}
+
+<script>
+    var LANG=checkLang();
+    new Vue({
+        el: '#app',
+        delimiters:["<{","}>"],
+        data: {
+            window:window,
+            iframeUrl:"/mainGuide",
+            mailTotal:0,
+            adminRole:"",
+            flyLang:GOFLY_LANG[LANG],
+            host:getBaseUrl(),
+            kefuId:"",
+            entId:"",
+            menuAdminShow:false,
+            superShow:false,
+            onlineType:"success",
+            adminAvator:"",
+            server:getWsBaseUrl()+"/ws_kefu?token="+localStorage.getItem("token"),
+            haveNewMessage:"",
+            alertSounding:false,
+            alertSoundingTimer:null,
+            configs:[],
+
+        },
+        methods: {
+            openIframeUrl(url){
+                this.iframeUrl=url;
+            },
+            //退出
+            logout(){
+                localStorage.removeItem("token");
+                this.openIframeUrl('/login');
+            },
+            //跳转
+            openUrl(url){
+                window.location.href=url;
+            },
+            GetQueryString(name){
+                var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+                var r = window.location.search.substr(1).match(reg);
+                if(r!=null)return  unescape(r[2]); return null;
+            },
+            changeOnlineStatus(command){
+                var _this=this;
+                sendAjax("/kefu/updateOnlineStatus","get",{status:command},function () {
+                    _this.kefuInfo();
+                });
+            },
+            //初始化websocket
+            initConn() {
+                let socket = new ReconnectingWebSocket(this.server);//创建Socket实例
+                this.socket = socket
+                this.socket.onmessage = this.OnMessage;
+            },
+            OnMessage(e) {
+                var _this=this;
+                var redata = JSON.parse(e.data);
+                var msg = redata.data;
+                switch (redata.type){
+                    case "notice":
+                        _this.haveNewMessage="new";
+                        notify(msg.username, {
+                            body: msg.content,
+                            icon: msg.avator
+                        }, function(notification) {
+                            window.focus();
+                            notification.close();
+                            _this.openIframeUrl("/chat_main");
+                        });
+                        _this.$notify({
+                            title: '通知',
+                            message: msg.content,
+                            type: 'success'
+                        });
+                        if(_this.getConfig("VisitorForceAlert")=="on"){
+                            _this.newVisitorForceAlert(redata.data.username);
+                        }else{
+                            _this.alertSound();
+                        }
+                        break;
+                    case "message":
+                            if(msg.is_kefu!="no"){
+                                return;
+                            }
+                            _this.haveNewMessage="new";
+                            notify(msg.name, {
+                                body: msg.content,
+                                icon: msg.avator
+                            }, function(notification) {
+                                window.focus();
+                                notification.close();
+                                _this.openIframeUrl("/chat_main");
+                            });
+                            _this.alertSound();
+                        break;
+                }
+
+            },
+            kefuInfo(){
+                let _this=this;
+                $.ajax({
+                    type:"get",
+                    url:"/kefu/kefuinfo",
+                    headers:{
+                        "token":localStorage.getItem("token")
+                    },
+                    success: function(data) {
+                        if (data.code != 200) {
+                            window.location.href="/login";
+                        } else {
+                            var result=data.result;
+                            if(result.role_id<=2){
+                                _this.menuAdminShow=true;
+                            }
+                            if(result.role_id==1){
+                                _this.superShow=true;
+                            }
+                            _this.kefuId=result.id;
+                            _this.entId=result.ent_id;
+                            _this.adminAvator=result.avator;
+                            if(result.online_status==1){
+                                _this.onlineType="success";
+                            }else{
+                                _this.onlineType="danger";
+                            }
+
+                        }
+                    }
+                });
+            },
+            switchLang(command){
+               setLocalStorage("lang",command);
+               document.location.reload();
+            },
+            //新访客强制提醒
+            newVisitorForceAlert:function (title) {
+                var _this=this;
+                if(_this.alertSounding){
+                    return;
+                }
+                var timer=_this.newVisitorForceAlertSound();
+                this.$confirm(title, '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(function(){
+                    clearInterval(timer);
+                    _this.alertSounding=false;
+                }).catch(function(){
+                    clearInterval(timer);
+                    _this.alertSounding=false;
+                });
+                _this.alertSounding=true;
+            },
+            newVisitorForceAlertSound(){
+                var _this=this;
+                var timer=setInterval(function(){
+                    _this.alertSound();
+                },3000);
+                _this.alertSoundingTimer=timer;
+                return timer;
+            },
+            getConfigs(){
+                var _this=this;
+                sendAjax("/ent_configs","get",{},function(data){
+                    _this.configs=data.result;
+                });
+            },
+            getConfig(key){
+                for(index in this.configs){
+                    if(key==this.configs[index].conf_key){
+                        return this.configs[index].conf_value;
+                    }
+                }
+                return "";
+            },
+            //提示音
+            alertSound(){
+                var b = document.getElementById("chatMessageAudio");
+                var src=this.getConfig("KefuAlertSound");
+                if(src!=""){
+                    b.src=src;
+                }
+                var p = b.play();
+                p && p.then(function(){}).catch(function(e){});
+            },
+        },
+        created: function () {
+            this.kefuInfo();
+            this.initConn();
+            this.getConfigs();
+            $(function(){
+                $("body").on("click",".menuLeftItem",function(){
+                    $(".menuLeftItem").removeClass("active");
+                    $(this).addClass("active");
+                });
+            })
+        }
+    })
+</script>
+
+
+</html>

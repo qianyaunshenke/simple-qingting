@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.devops.project.business.mapper.MessageMapper">
+    
+    <resultMap type="com.devops.project.business.domain.Message" id="MessageResult">
+        <result property="id"    column="id"    />
+        <result property="kefuId"    column="kefu_id"    />
+        <result property="visitorId"    column="visitor_id"    />
+        <result property="content"    column="content"    />
+        <result property="createdAt"    column="created_at"    />
+        <result property="updatedAt"    column="updated_at"    />
+        <result property="deletedAt"    column="deleted_at"    />
+        <result property="mesType"    column="mes_type"    />
+        <result property="status"    column="status"    />
+        <result property="entId"    column="ent_id"    />
+    </resultMap>
+
+    <sql id="selectMessageVo">
+        select id, kefu_id, visitor_id, content, created_at, updated_at, deleted_at, mes_type, status, ent_id from message
+    </sql>
+
+    <select id="selectMessageList" parameterType="com.devops.project.business.domain.Message" resultMap="MessageResult">
+        <include refid="selectMessageVo"/>
+        <where>  
+            <if test="kefuId != null  and kefuId != ''"> and kefu_id = #{kefuId}</if>
+            <if test="visitorId != null  and visitorId != ''"> and visitor_id = #{visitorId}</if>
+            <if test="content != null  and content != ''"> and content = #{content}</if>
+            <if test="createdAt != null "> and created_at = #{createdAt}</if>
+            <if test="updatedAt != null "> and updated_at = #{updatedAt}</if>
+            <if test="deletedAt != null "> and deleted_at = #{deletedAt}</if>
+            <if test="mesType != null  and mesType != ''"> and mes_type = #{mesType}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="entId != null "> and ent_id = #{entId}</if>
+        </where>
+        order by created_at desc
+
+    </select>
+
+
+    <delete id="deleteMessageByIds" parameterType="String">
+        delete from message where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+
+</mapper>

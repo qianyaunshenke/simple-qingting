@@ -1,0 +1,1282 @@
+
+
+<!DOCTYPE html>
+<html lang="cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>在线客服系统</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/element-ui/2.15.7/theme-chalk/index.min.css">
+    <script src="https://cdn.staticfile.org/vue/2.6.11/vue.min.js"></script>
+    <script src="https://cdn.staticfile.org/element-ui/2.15.7/index.js"></script>
+    <script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/static/js/functions.js"></script>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <style>
+
+    </style>
+
+</head>
+<body class="text-center">
+
+<div id="app" style="width:100%">
+    <template>
+        <el-container v-loading.fullscreen.lock="fullscreenLoading">
+
+            <el-main class="mainMain">
+                <el-table
+                        :data="kefuMessages.list"
+                        border
+                        style="width: 100%;">
+                    <el-table-column
+                            prop="img"
+                            label="客服">
+                        <template slot-scope="scope">
+                            <el-avatar :size="50"><img :title="scope.row.kefu_name" :src="scope.row.kefu_avator"/></el-avatar>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            width="100"
+                            prop="mes_type"
+                            label="消息来源">
+                        <template slot-scope="scope">
+                            <i style="font-size: 30px;" class="el-icon-back" v-if="scope.row.mes_type=='visitor'"></i>
+                            <i style="font-size: 30px;" class="el-icon-right" v-if="scope.row.mes_type=='kefu'"></i>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="img"
+                            label="访客">
+                        <template slot-scope="scope">
+                            <div  style="display: flex;align-items: center">
+                                <el-avatar :size="50"><img :title="scope.row.visitor_name" :src="scope.row.visitor_avator"/></el-avatar>
+                                &nbsp;&lt;{scope.row.visitor_name}>
+                            </div>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                            width="350px"
+                            prop="content"
+                            label="内容">
+                        <template slot-scope="scope">
+                            <div v-html="scope.row.content"></div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="create_time"
+                            label="发送时间">
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                        background
+                        @current-change="kefuMessagesPage"
+                        :current-page="kefuMessages.page"
+                        layout="prev,pager, next"
+                        :page-size="kefuMessages.pagesize"
+                        :total="kefuMessages.count">
+                </el-pagination>
+            </el-main>
+
+        </el-container>
+    </template>
+
+</div>
+</body>
+
+<script src="/static/js/functions.js?v=1.0.1"></script>
+<script src="/static/js/chat-lang.js?v=1.0.0"></script>
+<script>
+    var ACTION="setting_kefu_message";
+    var LANG=checkLang();
+</script>
+<script>
+    var app=new Vue({
+        el: '#app',
+        delimiters:["<{","}>"],
+        data: {
+            host:getBaseUrl(),
+            flyLang:GOFLY_LANG[LANG],
+            iframeUrl:"/setting_statistics",
+            fullscreenLoading:false,
+            adminAvator:"",
+            adminRole:"",
+            openIndex:[1,3],
+            account: {
+                username: "",
+                password: "",
+            },
+
+            rules: {
+                server: [
+                    { required: true, message: '请输入服务地址', trigger: 'blur' },
+                ],
+                port: [
+                    { required: true, message: '请输入端口号', trigger: 'blur' },
+                ],
+                database: [
+                    { required: true, message: '请输入数据库名', trigger: 'blur' },
+                ],
+                username: [
+                    { required: true, message: '请输入用户名', trigger: 'blur' },
+                ],
+                name: [
+                    { required: true, message: '请输入用户名', trigger: 'blur' },
+                ],
+                avator: [
+                    { required: true, message: '请选择头像', trigger: 'blur' },
+                ],
+                role_id: [
+                    { required: true, message: '请选择角色', trigger: 'blur' },
+                ],
+
+                nickname: [
+                    { required: true, message: '请输入昵称', trigger: 'blur' },
+                ],
+                method: [
+                    { required: true, message: '请输入允许的方法', trigger: 'blur' },
+                ],
+                path: [
+                    { required: true, message: '请输入允许的路径', trigger: 'blur' },
+                ],
+            },
+            kefuList:{
+                page:1,
+                count:0,
+                pagesize:0,
+                list:[],
+            },
+            kefuDialog:false,
+            kefuForm:{
+                id:"",
+                name:"",
+                password:"",
+                avator:"",
+                nickname:"",
+                role_name:"",
+                role_id:"",
+            },
+            roleList:[],
+            configList:[],
+            entConfigList:[
+                {conf_name: "微信公众号(AppId)", conf_key: "WechatAppId", conf_value: ""},
+                {conf_name: "微信公众号(AppSecret)", conf_key: "WechatAppSecret", conf_value: ""},
+                {conf_name: "微信公众号(Token)", conf_key: "WechatAppToken", conf_value: ""},
+                {conf_name: "微信发给客服，访客来了提醒模板消息ID <a href='/static/images/install/visitor_tpl.png' target='_blank'>查看模板消息格式</a>", conf_key: "WechatVisitorTemplateId", conf_value: ""},
+                {conf_name: "微信发给客服，消息咨询提醒模板消息ID <a href='/static/images/install/msg_tpl.png' target='_blank'>查看模板消息格式</a>", conf_key: "WechatMessageTemplateId", conf_value: ""},
+                {conf_name: "微信发给访客，消息回复提醒模板ID <a href='/static/images/install/customer_tpl.png' target='_blank'>查看模板消息格式</a>", conf_key: "WechatKefuTemplateId", conf_value: ""},
+                {conf_name: "微信客服消息接口( on开启;off关闭;默认关闭 )", conf_key: "WechatKefu", conf_value: "on"},
+                {conf_name: "微信网页授权回跳域名(例: https://当前域名，http/https必须加)", conf_key: "WechatHost", conf_value: ""},
+                {conf_name: "微信授权文件( 公众号需要验证域名权限 )", conf_key: "WechatAuthFile", conf_value: ""},
+                {conf_name: "微信菜单JSON <a href='/setting_wechat_menu'>可视化编辑</a>", conf_key: "WechatMenu", conf_value: ""},
+                {conf_name: "企业微信(CorpId)", conf_key: "WorkWechatCorpid", conf_value: ""},
+                {conf_name: "企业微信应用(AgentId)", conf_key: "WorkWechatAppAgentId", conf_value: ""},
+                {conf_name: "企业微信应用(Secret)", conf_key: "WorkWechatAppSecret", conf_value: ""},
+                {conf_name: "落地域名( 访问后跳转的最终域名，确认该域名已解析绑定到客服平台 )", conf_key: "VisitorLandHost", conf_value: ""},
+                {conf_name: "邮箱(SMTP地址, 例: smtp.qq.com:465)", conf_key: "NoticeEmailSmtp", conf_value: ""},
+                {conf_name: "邮箱(邮箱名, 例: xxxxx@qq.com)", conf_key: "NoticeEmailAddress", conf_value: ""},
+                {conf_name: "邮箱(授权码, 例: ubbabcdefocbfce)", conf_key: "NoticeEmailPassword", conf_value: ""},
+                {conf_name: "关闭用户时提示语", conf_key: "CloseVisitorMessage", conf_value: ""},
+                {conf_name: "访客到来强提醒 (on开启;off关闭)", conf_key: "VisitorForceAlert", conf_value: "off"},
+                {conf_name: "访客新消息强提醒 (on开启;off关闭)", conf_key: "VisitorMessageAlert", conf_value: "off"},
+                {conf_name: "客服端提示声音", conf_key: "KefuAlertSound", conf_value: "/static/images/alert2.ogg"},
+                {conf_name: "一句话企业简介", conf_key: "KefuIntroduce", conf_value: ""},
+                {conf_name: "常问关键词（以英文逗号,分割）", conf_key: "VisitorQaKeywords", conf_value: ""},
+                {conf_name: "自动弹窗延迟时间（毫秒，比如1000是1秒）", conf_key: "AutoOpenDialogTime", conf_value: ""},
+            ],
+            roleDialog:false,
+            noticeList:[],
+            wechatWelcomes:[],
+            welcomeDialog:false,
+            ipblackList:[],
+            welcomeForm: {
+                content: "",
+                keyword:"",
+            },
+            roleForm:{
+                id:"",
+                name:"",
+                method:"",
+                path:"",
+            },
+            statistics:{},
+            commentStatistics:{},
+            pageindex: {
+                title_cn: "",
+                title_en: "",
+                keywords_cn: "",
+                keywords_en: "",
+                desc_cn: "",
+                desc_en: "",
+                css_js: "",
+                html_cn: "",
+                html_en: "",
+            },
+            modifyPass:{
+                old_pass:"",
+                new_pass:"",
+                confirm_new_pass:""
+            },
+            menuStoreShow:false,
+            menuAdminShow:false,
+            deployTitle:"",
+            kefuId:"",
+            kefuName:"",
+            entId:"",
+            avatarUrl:"",
+            kefuMessages:{
+                page:1,
+                count:0,
+                pagesize:0,
+                list:[],
+                kefuid:"",
+            },
+            visitorMessages:{
+                page:1,
+                count:0,
+                pagesize:0,
+                list:[],
+                visitor_id:"",
+            },
+            kefuListAll:{
+                page:1,
+                count:0,
+                pagesize:0,
+                list:[],
+            },
+            visitorListAll:{
+                page:1,
+                count:0,
+                pagesize:0,
+                list:[],
+            },
+            cateDialog:false,
+            cateForm:{
+                id:"",
+                cate_name:"",
+                is_top:0,
+            },
+            article:{
+                title:"",
+                content:"",
+            },
+            visitor:{
+                visitor_id:"",
+                refer:"",
+                client_ip:"",
+                city:"",
+                status:"",
+                source_ip:"",
+                created_at:"",
+                osVersion:"",
+                browser:"",
+                wechat_oauth:"",
+            },
+            visitorExtra:[],
+            articleCate:[],
+            articleList:[],
+            articleCateId:0,
+            articleDialog:false,
+            kefuInfo:{},
+            visitorAttrs:{},
+            visitorAttrDialog:false,
+            visitorMessageDialog:false,
+            visitorIdMessage:"",
+            visitorSearch:{},
+            kefuSearch:{},
+            kefuMessageDialog:false,
+            welcomeWechatDialog:false,
+            kefuIdMessage:"",
+            allTags:[],
+            editor:null,
+            uploadWechatUrl:"/kefu/uploadWechatAuthFile?token="+localStorage.getItem("token"),
+            uploadAvatorUrl:"/kefu/uploadAvator?token="+localStorage.getItem("token"),
+            newsList:{},
+            newsDialog:false,
+            newsForm:{
+                id:"",
+                tag:"",
+                title:"",
+                content:"",
+            },
+            logList:{},
+            wechatServerUrl:"",
+            wechatVisitorUrl:"",
+            visitorUrl:"",
+        },
+
+        methods: {
+            
+            setAccount(formName){
+                let _this=this;
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        $.post(BaseURL + "/setting_account",_this.account,function(data){
+                            if(data.code==200){
+                                _this.$message({
+                                    message: data.msg,
+                                    type: 'success'
+                                });
+                            }else{
+                                _this.$message({
+                                    message: data.msg,
+                                    type: 'error'
+                                });
+                            }
+                        });
+                    } else {
+                        return false;
+                    }
+                });
+            },
+
+            
+            resetForm(formName) {
+                this.loading=false;
+                this.$refs[formName].resetFields();
+            },
+            
+            openUrl(url){
+                
+                this.iframeUrl=url;
+            },
+            
+            openSelfUrl(url){
+                window.location.href=url;
+                
+            },
+            
+            goBack(){
+                window.history.back();
+            },
+            
+            showNotice(){
+                this.fullscreenLoading=false;
+                this.$message({
+                    message: '配置信息写入同级config目录，目录不存在会自动创建！',
+                    type: 'warning',
+                    duration:'8000',
+                    showClose:true,
+                });
+            },
+            
+            initInfo(){
+                let _this=this;
+                this.sendAjax("/kefu/kefuinfo","get",{},function(result){
+                    if(result.role_id==2){
+                        _this.menuStoreShow=true;
+                    }
+                    if(result.role_id==1){
+                        _this.menuAdminShow=true;
+                    }
+                    _this.kefuId=result.name;
+                    _this.entId=result.ent_id;
+                    _this.visitorUrl=_this.host+'/chatIndex?kefu_id='+result.name+'&ent_id='+result.ent_id;
+                    _this.wechatServerUrl=_this.host+'/wechat/server/'+result.ent_id+'/'+result.name;
+                    _this.wechatVisitorUrl=_this.host+'/wechatIndex?ent_id='+result.ent_id+'&kefu_id='+result.name;;
+                });
+                if(ACTION=="setting_deploy"){
+
+                }
+                if(ACTION=="setting_avator"){
+                    this.sendAjax("/kefuinfo","get",{},function(result){
+                        _this.kefuInfo=result;
+                        _this.avatarUrl=result.avator;
+                    });
+                }
+
+                if(ACTION=="setting_kefu_list"){
+                    var page=this.getQueryVariable("page");
+                    if(!page) page=1;
+                    this.kefuListOwnPage(page);
+                    this.sendAjax("/kefu/roleList","get",{},function(result){
+                        _this.roleList=result;
+                    });
+                }
+                if(ACTION=="setting_user_all"){
+                    var page=this.getQueryVariable("page");
+                    if(!page) page=1;
+                    this.kefuListAllPage(page)
+                }
+                if(ACTION=="setting_visitor_list"){
+                    var page=this.getQueryVariable("page");
+                    if(!page) page=1;
+                    this.visitorListAllPage(page)
+                    this.getTags();
+                }
+                if(ACTION=="roles_list"){
+                    this.sendAjax("/roles","get",{},function(result){
+                        _this.roleList=result;
+                    });
+                }
+                if(ACTION=="setting_statistics"){
+                    this.checkAuth();
+                    this.sendAjax("/statistics","get",{},function(result) {
+                        _this.statistics = result;
+                    });
+                    this.sendAjax("/kefu/commentStatistics","get",{},function(result) {
+                        _this.commentStatistics = result;
+                    });
+
+                }
+                if(ACTION=="setting_welcome"){
+
+                    this.getWelcomes();
+                }
+                if(ACTION=="setting_ipblack"){
+                    this.sendAjax("/ipblacks_all","get",{},function(result){
+                        _this.ipblackList=result.list;
+                    });
+                }
+                if(ACTION=="setting_config"){
+                    this.sendAjax("/configs","get",{},function(result){
+                        _this.configList=result;
+                    });
+                }
+                if(ACTION=="setting_configs"){
+                    this.sendAjax("/ent_configs","get",{},function(result){
+                        var temp={};
+                        for(i in result){
+                            temp[result[i].conf_key]=result[i];
+                        }
+                        console.log(temp);
+                        for(i in _this.entConfigList){
+                            var value="";
+                            if(temp[_this.entConfigList[i].conf_key]){
+                                value=temp[_this.entConfigList[i].conf_key].conf_value;
+                            }
+                            _this.entConfigList[i].conf_value=value;
+                        }
+                    });
+                }
+                if(ACTION=="setting_news"){
+                    this.getNews();
+                }
+                if(ACTION=="setting_kefu_message"){
+                    var id=this.getQueryVariable("id");
+                    var page=this.getQueryVariable("page");
+                    this.kefuMessages.kefuid=id;
+                    this.kefuMessagesPage(page);
+                }
+                if(ACTION=="setting_visitor_message"){
+                    var visitor=this.getQueryVariable("visitor");
+                    var page=this.getQueryVariable("page");
+                    this.visitorMessages.visitor_id=visitor;
+                    this.visitorMessagesPage(page);
+                    this.getVisitorInfo(visitor);
+                    this.getWechatOauth(visitor);
+                }
+                if(ACTION=="setting_articles"){
+                    this.getArticleCate();
+                    this.getArticle();
+                }
+                if(ACTION=="setting_logs"){
+                    this.getLogs();
+                }
+            },
+            kefuMessagesPage(page){
+                var _this=this;
+                this.sendAjax("/kefulist_message","get",{id:this.kefuMessages.kefuid,page:page},function(result){
+                    _this.kefuMessages.list=result.list;
+                    _this.kefuMessages.count=result.count;
+                    for(var i in result.list){
+                        result.list[i].content=replaceContent(result.list[i].content);
+                    }
+                    _this.kefuMessages.page=result.page;
+                    _this.kefuMessages.pagesize=result.pagesize;
+                });
+            },
+            visitorMessagesPage(page){
+                var _this=this;
+                this.sendAjax("/visitorlist_message","get",{visitor_id:this.visitorMessages.visitor_id,page:page},function(result){
+                    for(var i in result.list){
+                        var visitorAvator=result.list[i].visitor_avator;
+                        var kefuAvator=result.list[i].kefu_avator;
+                        var visitorName=result.list[i].visitor_name;
+                        var kefuName=result.list[i].kefu_name;
+                        if(result.list[i].mes_type=='visitor'){
+                            result.list[i].kefu_avator=visitorAvator;
+                            result.list[i].kefu_name=visitorName;
+                            result.list[i].visitor_name=kefuName;
+                            result.list[i].visitor_avator=kefuAvator;
+                        }
+                        result.list[i].content=replaceContent(result.list[i].content);
+                    }
+                    _this.visitorMessages.list=result.list;
+                    _this.visitorMessages.count=result.count;
+                    _this.visitorMessages.page=result.page;
+                    _this.visitorMessages.pagesize=result.pagesize;
+                });
+            },
+            kefuListAllPage(page){
+                var _this=this;
+                this.sendAjax("/kefulist?page="+page,"get",{},function(result){
+                    _this.kefuListAll.list=result.list;
+                    _this.kefuListAll.count=result.count;
+                    _this.kefuListAll.page=result.page;
+                    _this.kefuListAll.pagesize=result.pagesize;
+                });
+            },
+            kefuListOwnPage(page){
+                var _this=this;
+                this.sendAjax("/kefu/kefuList","get",{page:page,pagesize:20,kefu_name:this.kefuSearch.name},function(result){
+                    for(var i in result.list){
+                        result.list[i].updated_at=dateFormat("YYYY-mm-dd HH:MM:SS",new Date(result.list[i].updated_at));
+                        result.list[i].created_at=dateFormat("YYYY-mm-dd HH:MM:SS",new Date(result.list[i].created_at));
+                        if(result.list[i].status==0){
+                            result.list[i].status=true;
+                        }else{
+                            result.list[i].status=false;
+                        }
+                    }
+                    _this.kefuList.list=result.list;
+                    _this.kefuList.count=result.count;
+                    _this.kefuList.page=result.page;
+                    _this.kefuList.pagesize=result.pagesize;
+                });
+            },
+            visitorListAllPage(page){
+                var _this=this;
+                var parames={orderBy:"created_at",pagesize:15,visitorName:this.visitorSearch.name,visitorTag:this.visitorSearch.tag};
+                this.sendAjax("/kefu/visitorList?page="+page,"get",parames,function(result){
+                    _this.visitorListAll.list=result.list;
+                    _this.visitorListAll.count=result.count;
+                    _this.visitorListAll.page=result.page;
+                    _this.visitorListAll.pagesize=result.pagesize;
+                });
+            },
+            sendAjax(url,method,params,callback){
+                let _this=this;
+                $.ajax({
+                    type: method,
+                    url: BaseURL +  url,
+                    data:params,
+                    headers: {
+                        "token": localStorage.getItem("token")
+                    },
+                    error:function(res){
+                        var data=JSON.parse(res.responseText);
+                        if(data.code==200|| data.code==20000){
+                        }else{
+                            _this.$message({
+                                message: data.msg,
+                                type: 'error'
+                            });
+                        }
+                    },
+                    success: function(data) {
+                        _this.fullscreenLoading=false
+                        if(data.code==200 || data.code==20000){
+                            if(data.result!=null){
+                                callback(data.result);
+                            }else{
+                                callback(data);
+                            }
+                            return;
+                        }
+                        _this.$message({
+                            message: data.msg,
+                            type: 'error'
+                        });
+                    }
+                });
+            },
+            
+            addKefu(){
+                this.kefuForm={
+                    id:"",
+                    name:"",
+                    password:"",
+                    avator:"",
+                };
+                this.kefuDialog=true;
+            },
+            
+            addCate(){
+                this.cateForm={
+                    id:"",
+                    cate_name:"",
+                    is_top:0,
+                };
+                this.cateDialog=true;
+            },
+            
+            submitKefuForm(formName){
+                let _this=this;
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        this.sendAjax("/kefu/kefuInfo","POST",_this.kefuForm,function(result){
+                            _this.kefuDialog=false;
+                            _this.kefuListOwnPage(_this.kefuList.page);
+                        });
+                    } else {
+                        return false;
+                    }
+                });
+            },
+            switchUserStatus:function(status,id){
+                if(status){
+                    status=0;
+                }else{
+                    status=1;
+                }
+                var _this=this;
+                this.sendAjax("/kefu/kefuStatus","POST",{status:status,id:id},function(result){
+                    _this.kefuListOwnPage(_this.kefuList.page);
+                });
+            },
+            
+            getNews(page){
+                var _this=this;
+                this.sendAjax("/other/news","get",{page:page,pagesize:20},function(result){
+                    _this.newsList=result;
+                });
+            },
+            
+            getLogs(page){
+                var _this=this;
+                this.sendAjax("/kefu/logs","get",{page:page,pagesize:20},function(result){
+                    _this.logList=result;
+                });
+            },
+            
+            saveNews(formName){
+                let _this=this;
+                this.newsForm.content=this.editor.txt.html();
+                this.sendAjax("/system/saveNews","POST",_this.newsForm,function(result){
+                    _this.newsDialog=false;
+                    _this.getNews();
+                });
+            },
+            
+            deleteNews(id){
+                var _this=this;
+                this.$confirm('此操作将删除内容, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(function(){
+                    _this.sendAjax("/system/delNews","get",{id:id},function(result){
+                        _this.$message({
+                            type: 'success',
+                            message: result.msg
+                        });
+                        _this.getNews();
+                    });
+                });
+            },
+            
+            submitWelcomeForm(formName,isWechat){
+                let _this=this;
+                if(!isWechat){
+                    _this.welcomeForm.content=this.editor.txt.html();
+                }
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        this.sendAjax("/kefu/notice","POST",_this.welcomeForm,function(result){
+                            _this.welcomeDialog=false;
+                            _this.welcomeWechatDialog=false;
+                            _this.getWelcomes();
+                        });
+                    } else {
+                        return false;
+                    }
+                });
+            },
+            
+            getKefu(kefuId){
+                let _this=this;
+                this.sendAjax("/kefu/kefuSetting","GET",{kefu_id:kefuId},function(result){
+                    _this.kefuDialog=true;
+                    _this.kefuForm=result;
+                    _this.kefuForm.password="";
+                });
+            },
+            
+            deleteKefu(kefuId){
+                var _this=this;
+                this.$confirm('此操作将删除该用户, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(function(){
+                    _this.sendAjax("/kefu/kefuInfo?id="+kefuId,"DELETE",{id:kefuId},function(result){
+                        _this.kefuDialog=false;
+                        _this.kefuListOwnPage(_this.kefuList.page);
+                    });
+                });
+            },
+            
+            deleteVisitor(visitorId){
+                var _this=this;
+                this.$confirm('此操作将删除访客, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(function(){
+                    this.sendAjax("/kefu/delVisitor?visitor_id="+visitorId,"DELETE",{},function(result){
+                        var page=_this.visitorListAll.page;
+                        if(!page) page=1;
+                        _this.visitorListAllPage(page);
+                    });
+                });
+            },
+            
+            deleteVisitorMessage(visitorId){
+                var _this=this;
+                this.$confirm('此操作将清除访客所有记录, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(function(){
+                    _this.sendAjax("/kefu/delVisitorMessage","get",{visitor_id:visitorId},function(result){
+                        _this.$message({
+                            type: 'success',
+                            message: '删除成功!'
+                        });
+                        var page=_this.visitorListAll.page;
+                        if(!page) page=1;
+                        _this.visitorListAllPage(page);
+                    });
+                });
+            },
+            
+            getWelcomes(){
+                var _this=this;
+                _this.noticeList=[];
+                _this.wechatWelcomes=[];
+                this.sendAjax("/kefu/notices","get",{},function(result){
+                    for(var key in result){
+                        if(result[key]['keyword']=="welcome"){
+                            _this.noticeList.push(result[key]);
+                        }
+                        if(result[key]['keyword']=="wechat"){
+                            _this.wechatWelcomes.push(result[key]);
+                        }
+                    }
+
+                });
+            },
+            
+            deleteWelcome(id){
+                let _this=this;
+                this.sendAjax("/kefu/notice?id="+id,"DELETE",{id:id},function(result){
+                    _this.getWelcomes();
+                });
+            },
+            
+            deleteIpblack(ip){
+                let _this=this;
+                this.sendAjax("/kefu/ipblack?ip="+ip,"DELETE",{ip:ip},function(result){
+                    _this.sendAjax("/ipblacks_all","get",{},function(result){
+                        _this.ipblackList=result.list;
+                    });
+                });
+            },
+            
+            showAuthDialog(id,name,method,path){
+                this.roleForm.id=id
+                this.roleForm.name=name
+                this.roleForm.method=method
+                this.roleForm.path=path
+                this.roleDialog=true;
+            },
+            
+            setConfigItem(key,value){
+                let _this=this;
+                this.sendAjax("/config","POST",{key:key,value:value},function(result){
+                    _this.sendAjax("/configs","get",{},function(result){
+                        _this.configList=result;
+                    });
+                    _this.$message({
+                        message: "更新成功",
+                        type: 'success'
+                    });
+                });
+            },
+            
+            setEntConfigItem(name,key,value){
+                let _this=this;
+                this.sendAjax("/kefu/entConfigs","POST",{name:name,key:key,value:value},function(result){
+                    _this.$message({
+                        message: "更新成功",
+                        type: 'success'
+                    });
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                });
+            },
+            
+            setWelcomeItem(id,content,delay_second){
+                let _this=this;
+                this.sendAjax("/kefu/updateNotice","POST",{id:id,content:content,delay_second:delay_second},function(result){
+                    _this.$message({
+                        message: "更新成功",
+                        type: 'success'
+                    });
+                });
+            },
+            
+            submitRoleForm(formName){
+                let _this=this;
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        this.sendAjax("/role","POST",_this.roleForm,function(result){
+                            _this.roleDialog=false;
+                            _this.sendAjax("/roles","get",{},function(result){
+                                _this.roleList=result;
+                            });
+                            _this.$message({
+                                message: result.msg,
+                                type: 'success'
+                            });
+                        });
+                    } else {
+                        return false;
+                    }
+                });
+            },
+            
+            setPageIndex(){
+                let _this=this;
+                this.sendAjax("/about","POST",this.pageindex,function(result){
+                    _this.$message({
+                        message: "编辑成功",
+                        type: 'success'
+                    });
+                });
+            },
+            
+            setModifyPass(){
+                let _this=this;
+                this.sendAjax("/modifypass","POST",_this.modifyPass,function(result){
+                    _this.$message({
+                        message: "修改成功",
+                        type: 'success'
+                    });
+                    _this.modifyPass.new_pass=_this.modifyPass.old_pass=_this.modifyPass.confirm_new_pass=""
+                });
+            },
+            
+            setModifyAvatar(){
+                let _this=this;
+                this.sendAjax("/modifyavator","POST",{avator:_this.avatarUrl},function(result){
+                    _this.$message({
+                        message: "修改成功",
+                        type: 'success'
+                    });
+                });
+            },
+            
+            modifyKefuInfo(){
+                let _this=this;
+                this.sendAjax("/modify_kefuinfo","POST",{avator:_this.kefuInfo.avator,nickname:_this.kefuInfo.nickname},function(result){
+                    _this.$message({
+                        message: "修改成功",
+                        type: 'success'
+                    });
+                    _this.sendAjax("/kefuinfo","get",{},function(result){
+                        _this.kefuInfo=result;
+                    });
+                });
+            },
+            handleAvatarSuccess(res, file) {
+                var _this=this;
+                console.log(res,file);
+                if(res.code!=200){
+                    _this.$message({
+                        message: res.msg,
+                        type: 'error'
+                    });
+                    return;
+                }
+                this.kefuInfo.avator = res.result.path;
+            },
+            beforeAvatarUpload(file) {
+                var isLt2M = file.size / 1024 / 1024 < 1;
+                if (!isLt2M) {
+                    this.$message.error('上传头像图片大小不能超过 1MB!');
+                }
+                return isLt2M;
+            },
+            checkAuth(){
+                let _this=this;
+                $.ajax({
+                    type:"post",
+                    url:BaseURL + "/check_auth",
+                    headers:{
+                        "token":localStorage.getItem("token")
+                    },
+                    success: function(data) {
+                        if (data.code != 200) {
+                            window.location.href="/login";
+                        } else {
+                            _this.adminAvator=data.result.avator;
+                            _this.adminRole=data.result.nick_name+"-"+data.result.role_name;
+                        }
+                    }
+                });
+            },
+            
+            getArticleCate(){
+                var _this=this;
+                this.sendAjax("/ent/article_cate","get",{},function(result){
+                    _this.articleCate=result;
+                });
+            },
+            setArticleCate(row){
+                this.articleCateId=row.id;
+                this.getArticle();
+            },
+            
+            getArticle(page){
+                var _this=this;
+                var params={};
+                params={pagesize:10,page:page};
+                if(this.articleCateId!=0){
+                    params.cat_id=this.articleCateId;
+                }
+                this.sendAjax("/ent/article_list","get",params,function(result){
+                    _this.articleList=result;
+                });
+            },
+            
+            delArticleCate(id){
+                var _this=this;
+                this.$confirm('此操作将删除本分类所有回复, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(function(){
+                    var params={id:id};
+                    _this.sendAjax("/kefu/delArticleCate","get",params,function(result){
+                        _this.getArticleCate();
+                        _this.getArticle();
+                    });
+                });
+            },
+            
+            setArticleCateTop(id,isTop){
+                var _this=this;
+                var params={id:id,is_top:isTop};
+                _this.sendAjax("/kefu/articleCateTop","get",params,function(result){
+                    _this.getArticleCate();
+                    _this.getArticle();
+                });
+            },
+            
+            delArticle(id){
+                var _this=this;
+                this.$confirm('此操作将删除关键词回复, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(function(){
+                    var params={id:id};
+                    this.sendAjax("/kefu/delArticle","get",params,function(result){
+                        _this.getArticle();
+                    });
+                });
+
+            },
+            
+            addArticleCate(){
+                var _this=this;
+                this.sendAjax("/kefu/addArticleCate","POST",{name:this.cateForm.cat_name},function(data){
+                    _this.cateDialog=false;
+                    _this.getArticleCate();
+                });
+            },
+            
+            addArticle(){
+                var _this=this;
+                this.article.content=this.editor.txt.html();
+                this.sendAjax("/kefu/addArticle","POST",this.article,function(data){
+                    _this.articleDialog=false;
+                    _this.getArticle();
+                    _this.article={};
+                });
+            },
+            
+            searchVisitor(){
+                var _this=this;
+                _this.visitorListAll.page=1;
+                var parames={pagesize:15,visitorName:this.visitorSearch.name,visitorTag:this.visitorSearch.tag};
+                this.sendAjax("/kefu/visitorList?page="+_this.visitorListAll.page,"get",parames,function(result){
+                    _this.visitorListAll.list=result.list;
+                    _this.visitorListAll.count=result.count;
+                    _this.visitorListAll.page=result.page;
+                    _this.visitorListAll.pagesize=result.pagesize;
+                });
+            },
+            
+            getTags(){
+                var _this=this;
+                sendAjax("/kefu/tags","GET",{
+                },function(data){
+                    _this.allTags=data.result;
+                })
+            },
+            GetRequest() {
+                var str = location.href
+                var num = str.indexOf("#");
+                if(num <0){
+                    return "";
+                }
+                str = str.substr(num + 1);
+                return str;
+            },
+            getQueryVariable(variable){
+                var query = window.location.search.substring(1);
+                var vars = query.split("&");
+                for (var i=0;i<vars.length;i++) {
+                    var pair = vars[i].split("=");
+                    if(pair[0] == variable){return pair[1];}
+                }
+                return(false);
+            },
+            
+            getVisitorAttr(visitorId){
+                var _this=this;
+                _this.visitorAttrDialog=true;
+                this.sendAjax("/kefu/visitor_attr","get",{visitor_id:visitorId},function(result){
+                    _this.visitorAttrs=result;
+                });
+            },
+            switchLang(command){
+                setLocalStorage("lang",command);
+                document.location.reload();
+            },
+            
+            copyText(text){
+                copyText(text);
+                this.$message({
+                    message: "ok",
+                    type: 'success'
+                });
+            },
+            destoryEditor(){
+                this.welcomeForm.content="";
+                this.welcomeForm.id="";
+                this.welcomeForm.keyword="";
+                this.newForm={};
+                if(!this.editor){
+                    return;
+                }
+                this.editor.destroy();
+                this.editor = null;
+            },
+            initEditor(){
+                const E = window.wangEditor
+                this.editor = new E('#welcomeEditor');
+                
+                this.editor.config.uploadImgServer = '/kefu/editorUploadImg?token='+localStorage.getItem("token");
+                this.editor.config.height = 240;
+                this.editor.config.uploadImgMaxSize = 1 * 1024 * 1024; 
+                this.editor.config.uploadFileName = 'imgfile';
+                this.editor.config.uploadImgHooks = {
+                    
+                    success: function(xhr) {
+                        console.log('success', xhr)
+                    },
+                    
+                    fail: function(xhr, editor, resData) {
+                        console.log('fail', resData)
+                    },
+                    
+                    error: function(xhr, editor, resData) {
+                        console.log('error', xhr, resData)
+                    },
+                    
+                    timeout: function(xhr) {
+                        console.log('timeout')
+                    },
+                    
+                    
+                    customInsert: function(insertImgFn, result) {
+                        
+                        console.log('customInsert', result);
+                        insertImgFn(getImageUrl(result.data.url,getBaseUrl()));
+                    }
+                }
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                this.editor.create();
+            },
+            
+            uploadWechatAuthfileCallback:function(response, file, fileList){
+                if(response.code!=200){
+                    this.$message({
+                        message: response.msg,
+                        type: 'error'
+                    });
+                    return;
+                }
+                this.$message({
+                    message: response.msg,
+                    type: 'success'
+                });
+                for(var i in this.entConfigList){
+                    if(this.entConfigList[i].conf_key=="WechatAuthFile"){
+                        this.entConfigList[i].conf_value=response.result.path;
+                    }
+                }
+            },
+            
+            getVisitorInfo(visitor_id){
+                var _this=this;
+                $.ajax({
+                    type: "get",
+                    url: BaseURL + "/kefu/visitor",
+                    data: {visitorId: visitor_id},
+                    headers: {
+                        "token": localStorage.getItem("token")
+                    },
+                    success: function (data) {
+                        if (data.result != null) {
+                            let r = data.result;
+                            _this.visitor.visitor_id = r.visitor_id;
+                            _this.visitor.source_ip = r.source_ip;
+                            _this.visitor.created_at = data.create_time;
+                            _this.visitor.updated_at = data.last_time;
+                            _this.visitor.osVersion = data.os_version;
+                            _this.visitor.browser = data.browser;
+                            _this.visitor.city = r.city;
+                            if (r.refer != "") {
+                                _this.visitor.refer = r.refer
+                            } else {
+                                _this.visitor.refer = "-";
+                            }
+
+                            
+                            _this.chatTitle = "#" + r.id + "|" + r.name;
+                            _this.chatTitleType = "success";
+                            _this.visitorExtra = [];
+                            if (r.extra != "") {
+                                var extra = JSON.parse(b64ToUtf8(r.extra));
+                                if (typeof extra == "string") {
+                                    extra = JSON.parse(extra);
+                                }
+                                for (var key in extra) {
+                                    if (extra[key] == "") {
+                                        extra[key] = "无";
+                                    }
+                                    if (key == "visitorAvatar" || key == "visitorName" || key == "visitorProduct") continue;
+                                    var temp = {key: key, val: extra[key]}
+                                    _this.visitorExtra.push(temp);
+                                }
+                            }
+
+                        }
+                        if (data.code != 200) {
+                            _this.$message({
+                                message: data.msg,
+                                type: 'error'
+                            });
+                        }
+                    }
+                });
+
+            },
+            
+            getWechatOauth(visitor_id){
+                var _this=this;
+                $.ajax({
+                    type: "get",
+                    url: BaseURL + "/wechat/oauth",
+                    data: {visitor_id: visitor_id},
+                    headers: {
+                        "token": localStorage.getItem("token")
+                    },
+                    success: function (data) {
+                        if(data.code==400){
+                            _this.visitor.wechat_oauth="未绑定"
+                        }else{
+                            _this.visitor.wechat_oauth="已绑定"
+                        }
+                    }
+                });
+            },
+            
+            stopServer(){
+                var _this=this;
+                this.sendAjax("/system/stop","get",{},function(res){
+                    _this.$message({
+                        message: "服务在守护模式下会重启，非守护则直接关闭",
+                        type: 'success'
+                    });
+                });
+            },
+            
+            updateUserExpired(kefuName,expiredTime){
+                var _this=this;
+                this.sendAjax("/kefu/kefuExpiredTime","POST",{name:kefuName,expired_time:expiredTime},function(result){
+                    _this.kefuListOwnPage(_this.kefuList.page);
+                });
+            },
+            
+            delThisTag(id){
+                var _this=this;
+                this.$confirm('此操作将删除tag, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(function(){
+                    _this.sendAjax("/kefu/delThisTag","get",{tag_id:id},function(result){
+                        _this.$message({
+                            type: 'success',
+                            message: result.msg
+                        });
+                        _this.getTags();
+                    });
+                });
+            },
+        },
+
+        mounted:function(){
+            var urlParam=this.GetRequest();
+            if(urlParam!=""){
+                this.iframeUrl=urlParam;
+            }
+            this.initInfo();
+        },
+        created: function () {
+            
+            
+            
+        }
+    })
+
+</script>
+</html>
+

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>智能在线客服系统访客演示页面-免费在线客服系统源码-网站开源在线客服系统-私有化部署网页在线客服软件代码下载</title>
+    <meta name="keywords" content="智能在线客服系统,网站客服系统,免费在线客服,网站在线客服,在线客服软件,php客服" />
+    <meta name="description" content="智能在线客服系统，一套可独立私有化部署的免费开源客服系统，网站在线客服系统，下载zip解压即可，仅依赖MySQL数据库，是一个开箱即用的网页在线客服，适合PHP程序员使用，同时也是首页完全可以编辑的单页营销系统." />
+    <style>
+        .deployLink {
+            width: 500px;
+            margin: 0 auto;
+            background-color: #ecf5ff;
+            padding: 5px;
+            color: #0061c5;
+            border: 1px solid #d9ecff;
+            line-height: 20px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+<h2 style="margin: 40px;text-align: center">智能在线客服系统访客演示页面</h2>
+
+
+<pre class="deployLink">
+&lt;script src=&quot;{{.siteUrl}}/static/js/kefu-front.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+    KEFU.init({
+        KEFU_URL:"{{.siteUrl}}",//必填
+        KEFU_KEFU_ID: "{{.kefuName}}",//必填
+        KEFU_ENT: {{.entId}},//必填
+        KEFU_LANG:&quot;cn&quot;,//cn中文，en英文
+        KEFU_SHOW_TYPES:2,//展示样式，1：普通右下角，2：圆形icon
+        KEFU_AUTO_OPEN:false,//是否自动展开
+    })
+&lt;/script&gt;
+</pre>
+
+<script src="{{.siteUrl}}/static/js/kefu-front.js"></script>
+<script>
+    KEFU.init({
+        KEFU_URL:{{.siteUrl}},//必填
+        KEFU_KEFU_ID: {{.kefuName}},//必填
+        KEFU_ENT: {{.entId}},//必填
+        KEFU_LANG:"cn",//cn中文，en英文
+        KEFU_SHOW_TYPES:1,//展示样式，1：右下角长条，2：右边悬浮圆形icon
+        KEFU_AUTO_OPEN:false,//是否自动展开
+    })
+</script>
+
+</body>
+</html>

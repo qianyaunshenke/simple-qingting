@@ -1,0 +1,45 @@
+{{template "header" }}
+<div id="app" style="width:100%">
+    <template>
+        <el-container>
+
+            <el-main class="mainMain">
+                <el-table
+                        :data="logList.list"
+                        border
+                        style="width: 100%">
+                    <el-table-column
+                            prop="ip_address"
+                            label="IP地址">
+                    </el-table-column>
+                    <el-table-column
+                            prop="ent_id"
+                            label="企业ID">
+                    </el-table-column>
+                    <el-table-column
+                            prop="log_content"
+                            label="日志内容">
+                    </el-table-column>
+                    <el-table-column
+                            prop="created_at"
+                            label="时间">
+                    </el-table-column>
+                </el-table>
+
+                <el-pagination
+                        background
+                        @current-change="getLogs"
+                        :current-page="logList.page"
+                        layout="prev,pager, next"
+                        :page-size="logList.pagesize"
+                        :total="logList.count">
+                </el-pagination>
+            </el-main>
+
+        </el-container>
+    </template>
+
+</div>
+</body>
+
+{{template "setting_bottom" .}}

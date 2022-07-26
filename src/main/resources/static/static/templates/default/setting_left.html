@@ -1,0 +1,48 @@
+{{define "setting_left"}}
+<el-aside width="200px" style="margin-right: 10px">
+<el-menu
+
+        default-active="{{.tab_index}}" :default-openeds="openIndex"
+        >
+    <el-submenu index="1">
+        <template slot="title">
+            <i class="el-icon-s-custom"></i>
+            <span><{flyLang.pSettings}></span>
+        </template>
+        <el-menu-item-group>
+            <el-menu-item index="1-1" v-on:click="openUrl('/setting_statistics')"><{flyLang.statistics}></el-menu-item>
+            <el-menu-item index="1-3" v-on:click="openUrl('/setting_modifypass')"><{flyLang.modifyPassword}></el-menu-item>
+            <el-menu-item index="1-4" v-on:click="openUrl('/setting_avator')"><{flyLang.modifyKefuInfo}></el-menu-item>
+            <el-menu-item index="1-5" v-on:click="openUrl('/setting_welcome')"><{flyLang.welcome}></el-menu-item>
+
+        </el-menu-item-group>
+    </el-submenu>
+    <el-submenu index="3" v-show="menuStoreShow||menuAdminShow">
+        <template slot="title">
+            <i class="el-icon-s-cooperation"></i>
+            <span><{flyLang.tSettings}></span>
+        </template>
+        <el-menu-item-group>
+            <el-menu-item index="3-2"  v-on:click="openUrl('/setting_kefu_list')"><{flyLang.agentList}></el-menu-item>
+            <el-menu-item index="3-4"  v-on:click="openUrl('/setting_deploy')">客服接入</el-menu-item>
+            <el-menu-item index="3-5"  v-on:click="openUrl('/setting_configs')"><{flyLang.config}></el-menu-item>
+            <el-menu-item index="3-6"  v-on:click="openUrl('/setting_articles')">关键词回复</el-menu-item>
+        </el-menu-item-group>
+    </el-submenu>
+    <el-submenu index="2" v-show="menuAdminShow">
+        <template slot="title">
+            <i class="el-icon-s-tools"></i>
+            <span>系统服务</span>
+        </template>
+        <el-menu-item-group>
+            <el-menu-item index="4-2"  v-on:click="openUrl('/roles_list')">角色管理</el-menu-item>
+            <el-menu-item index="4-3"  v-on:click="openUrl('/setting_news')">管理公告</el-menu-item>
+            <el-menu-item index="4-6"  v-on:click="openUrl('/setting_config')">配置参数</el-menu-item>
+            <el-menu-item index="4-7"  v-on:click="openUrl('/setting_logs')">操作日志</el-menu-item>
+            <el-menu-item index="4-5"  v-on:click="openUrl('/setting_ipblack')">IP黑名单</el-menu-item>
+            <el-menu-item index="4-8"  v-on:click="stopServer">重启服务</el-menu-item>
+        </el-menu-item-group>
+    </el-submenu>
+</el-menu>
+</el-aside>
+{{end}}

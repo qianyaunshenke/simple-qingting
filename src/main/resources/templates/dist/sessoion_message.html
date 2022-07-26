@@ -1,0 +1,209 @@
+
+
+<!DOCTYPE html>
+<html lang="cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>在线客服系统</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/element-ui/2.15.7/theme-chalk/index.min.css">
+    <script src="https://cdn.staticfile.org/vue/2.6.11/vue.min.js"></script>
+    <script src="https://cdn.staticfile.org/element-ui/2.15.7/index.js"></script>
+    <script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/static/js/functions.js"></script>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <style>
+
+    </style>
+
+</head>
+<body class="text-center">
+
+<style>
+    .el-dialog__body{
+        padding: 0px 20px;
+    }
+    .el-dialog__header{
+        display: none;
+    }
+</style>
+<div id="app" style="width:100%">
+    <template>
+        <el-container>
+
+            <el-main class="mainMain" style="margin:0px 10px">
+                <el-form :inline="true" @submit.native.prevent class="demo-form-inline">
+                    <el-form-item label="索引">
+                        <el-input v-model="sessionIndex" @keyup.native.enter="searchVisitor"></el-input>
+                    </el-form-item>
+                    <!-- <el-form-item label="访客标签">
+                        <el-select clearable="true" v-model="visitorSearch.tag">
+                            <el-option :label="item.name" :value="item.id" v-for="item in allTags" v-bind:key="item.id"></el-option>
+                        </el-select>
+                    </el-form-item> -->
+                    <el-form-item>
+                        <el-button type="primary" @click="searchVisitor"  icon="el-icon-search" ></el-button>
+                    </el-form-item>
+                </el-form>
+                <el-table
+                        :data="sessionListAll.list"
+                        border
+                        style="width: 100%;">
+                    <el-table-column
+                            prop="content.kefu_id"
+                            label="user">
+                    </el-table-column>
+                    <el-table-column
+                            prop="mes_type"
+                            label="say">
+                        <template slot-scope="scope">
+                            <i style="font-size: 20px;" class="el-icon-right" ></i>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                            width="350px"
+                            prop="content"
+                            label="content">
+                        <template slot-scope="scope">
+                            <div v-html="scope.row.content.content"></div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="content.visitor_id"
+                            label="user">
+                    </el-table-column>
+
+                    <el-table-column
+                            prop="content.created_at"
+                            label="createtime">
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                        background
+                        @current-change="sessionListAllPage"
+                        :current-page="sessionListAll.page"
+                        layout="prev,pager, next"
+                        :page-size="sessionListAll.pagesize"
+                        :total="sessionListAll.count">
+                </el-pagination>
+            </el-main>
+
+        </el-container>
+    </template>
+
+</div>
+</body>
+
+<script src="/static/js/functions.js?v=1.0.1"></script>
+<script src="/static/js/chat-lang.js?v=1.0.0"></script>
+<script>
+    var ACTION="setting_visitor_list";
+    var LANG=checkLang();
+</script>
+<script>
+    var app=new Vue({
+        el: '#app',
+        delimiters:["<{","}>"],
+        data: {
+            host:getBaseUrl(),
+            flyLang:GOFLY_LANG[LANG],
+            sessionIndex: '',
+            sessionListAll: {
+              page: 1,
+              list: [],
+              count: 0,
+              pagesize: 10
+            }
+        },
+
+        methods: {
+            
+            sendAjax(url,method,params,callback){
+                let _this=this;
+                $.ajax({
+                    type: method,
+                    url: BaseURL + url,
+                    data:JSON.stringify(params),
+                    headers: {
+                        "token": localStorage.getItem("token"),
+                        "content-type": "application/json"
+                    },
+                    error:function(res){
+                        var data=JSON.parse(res.responseText);
+                        if(data.state==true || data.message=='success'){
+                        }else{
+                            _this.$message({
+                                message: data.msg,
+                                type: 'error'
+                            });
+                        }
+                    },
+                    success: function(data) {
+                        _this.fullscreenLoading=false
+                        if(data.state==true || data.message=='success'){
+                            if(data.result!=null){
+                                callback(data.result);
+                            }else{
+                                callback(data);
+                            }
+                            return;
+                        }
+                        _this.$message({
+                            message: data.msg,
+                            type: 'error'
+                        });
+                    }
+                });
+            },
+            
+            
+            searchVisitor(page){
+                var _this=this;
+                if(typeof page == 'object') {
+                  page = 1
+                }
+                _this.sessionListAll.page=page;
+                var parames={
+                  highlight: {preTag: "<em style='color:red'>", postTag: "</em>"},
+                  postTag: "</em>",
+                  preTag: "<em style='color:red'>",
+                  limit: 10,
+                  order: "DESC",
+                  page,
+                  query: this.sessionIndex
+                };
+                this.sendAjax("/api/query?database=db2","post",parames,function(data){
+                  let result = data.data
+                    result.documents && result.documents.forEach(document => {
+                    document.content = JSON.parse(document.text)
+                    let content = JSON.parse(document.text)
+                    if(content.mes_type == 'visitor') {
+                      document.content.kefu_id = content.visitor_id
+                      document.content.visitor_id = content.kefu_id
+                    }
+                  })
+                    _this.sessionListAll.list=result.documents;
+                    _this.sessionListAll.count=result.total;
+                    _this.sessionListAll.page=result.page;
+                    _this.sessionListAll.pagesize=result.limit;
+                });
+            },
+            sessionListAllPage(page){
+                this.searchVisitor(page)
+            },
+        },
+
+        mounted:function(){
+            this.searchVisitor(1);
+        },
+        created: function () {
+            
+            
+            
+        }
+    })
+
+</script>
+</html>
+

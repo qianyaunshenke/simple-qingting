@@ -1,0 +1,147 @@
+{{template "header" }}
+<div id="app" style="width:100%">
+    <template>
+        <el-container v-loading.fullscreen.lock="fullscreenLoading">
+            <el-main class="mainMain">
+                <div class="profile">
+                    <div class="profileItem">
+                        <div class="profileLeft"><i class="el-icon-eleme"></i>
+                            微信公众号
+                        </div>
+                        <div class="profileRight"><{visitor.wechat_oauth}></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="profileItem" v-on:click="addIpblack(visitor.source_ip)">
+                        <div class="profileLeft"><i class="el-icon-place"></i>
+                            <{flyLang.ipAddress}>
+                        </div>
+                        <div class="profileRight"><{visitor.source_ip}></div>
+                        <div class="clear"></div>
+                    </div>
+
+
+                    <div class="profileItem">
+                        <div class="profileLeft"><i class="el-icon-s-platform"></i>
+                            <{flyLang.OsVersion}>
+                        </div>
+                        <div class="profileRight"><{visitor.osVersion}></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="profileItem" :title="visitor.browser">
+                        <div class="profileLeft"><i class="el-icon-eleme"></i>
+                            <{flyLang.Browser}>
+                        </div>
+                        <div class="profileRight"><{visitor.browser}></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="profileItem"  v-on:click="openUrl('https://www.baidu.com/s?wd='+visitor.client_ip)">
+                        <div class="profileLeft">
+                            <i class="el-icon-map-location"></i>
+                            <{flyLang.city}>
+                        </div>
+                        <div class="profileRight"><{visitor.city}></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="profileItem">
+                        <div class="profileLeft">
+                            <i class="el-icon-time"></i>
+                            <{flyLang.firstTime}>
+                        </div>
+                        <div class="profileRight"><{visitor.created_at}></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="profileItem">
+                        <div class="profileLeft">
+                            <i class="el-icon-time"></i>
+                            <{flyLang.lastTime}>
+                        </div>
+                        <div class="profileRight"><{visitor.updated_at}></div>
+                        <div class="clear"></div>
+                    </div>
+                    <el-tooltip :content="visitor.refer" placement="left">
+                        <div class="profileItem" :title="visitor.refer">
+                            <div class="profileLeft">
+                                <i class="el-icon-guide"></i>
+                                <{flyLang.title}>
+                            </div>
+                            <div class="profileRight"><{visitor.refer}></div>
+                            <div class="clear"></div>
+                        </div>
+                    </el-tooltip>
+                    <el-tooltip  :content="visitor.visitor_id" placement="left">
+                        <div class="profileItem">
+                            <div class="profileLeft">
+                                <i class="el-icon-paperclip"></i>
+                                visitorId
+                            </div>
+                            <div class="profileRight"><{visitor.visitor_id}></div>
+                            <div class="clear"></div>
+                        </div>
+                    </el-tooltip>
+                    <el-tooltip  v-for="v in visitorExtra" :content="v.val" placement="left">
+                        <div class="profileItem" :title="v.val">
+                            <div class="profileLeft">
+                                <i class="el-icon-paperclip"></i>
+                                <{v.key}>
+                            </div>
+                            <div class="profileRight" v-on:click="copyText(v.val)"><{v.val}></div>
+                            <div class="clear"></div>
+                        </div>
+                    </el-tooltip>
+                </div>
+                <el-table
+                        :data="visitorMessages.list"
+                        border
+                        style="width: 100%;">
+                    <el-table-column
+                            prop="img"
+                            label="user">
+                        <template slot-scope="scope">
+                            <el-avatar :size="50"><img :title="scope.row.kefu_name" :src="scope.row.kefu_avator"/></el-avatar>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="mes_type"
+                            label="say">
+                        <template slot-scope="scope">
+                            <i style="font-size: 20px;" class="el-icon-right" ></i>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                            width="350px"
+                            prop="content"
+                            label="content">
+                        <template slot-scope="scope">
+                            <div v-html="scope.row.content"></div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="img"
+                            label="user">
+                        <template slot-scope="scope">
+                            <el-avatar :size="50"><img :title="scope.row.visitor_name" :src="scope.row.visitor_avator"/></el-avatar>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                            prop="create_time"
+                            label="createtime">
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                        background
+                        @current-change="visitorMessagesPage"
+                        :current-page="visitorMessages.page"
+                        layout="prev,pager, next"
+                        :page-size="visitorMessages.pagesize"
+                        :total="visitorMessages.count">
+                </el-pagination>
+            </el-main>
+
+        </el-container>
+    </template>
+
+</div>
+</body>
+{{template "setting_bottom" .}}

@@ -1,0 +1,20 @@
+<html lang="cn">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" name="viewport" />
+    <title>{{.Title}}</title>
+    <link rel="icon" href="/static/images/favicon.ico">
+</head>
+<body>
+
+</body>
+<script>
+    var KEFU_ID='{{.kefuId}}';
+    var REFER='{{.Refer}}';
+    var ENT_ID='{{.EntId}}';
+    var APP_ID='{{.AppId}}';
+    var HOST='{{.Host}}';
+    var url="https://open.weixin.qq.com/connect/oauth2/authorize?appid="+APP_ID+"&redirect_uri="+HOST+"%2FchatIndex%3Fent_id%3D"+ENT_ID+"%26kefu_id%3D"+KEFU_ID+"&response_type=code&scope=snsapi_userinfo#wechat_redirect"
+    document.location.href=url;
+</script>
+</html>

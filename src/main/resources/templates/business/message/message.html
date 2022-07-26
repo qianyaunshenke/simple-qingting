@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('会话列表')" />
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+        <div class="row">
+
+            <div class="col-sm-12 search-collapse">
+                <form id="data-form">
+                    <input type="hidden" name="visitorId" th:field="${visitorId}"/>
+                </form>
+            </div>
+
+            <div class="btn-group-sm" id="toolbar" role="group">
+                <a class="btn btn-danger" onclick="$.operate.add()" shiro:hasPermission="business:message:add">
+                    <i class="fa fa-shield"></i> 质检
+                </a>
+                <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="business:message:export">
+                    <i class="fa fa-download"></i> 导出
+                </a>
+            </div>
+            <div class="col-sm-12 select-table table-striped">
+                <table id="bootstrap-table"></table>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var editFlag = [[${@permission.hasPermi('business:message:edit')}]];
+        var prefix = ctx + "business/message";
+
+        $(function() {
+            var options = {
+                url: prefix + "/list?visitorId="+[[${visitorId}]],
+                createUrl: prefix + "/add",
+                updateUrl: prefix + "/edit/{id}",
+                removeUrl: prefix + "/remove",
+                exportUrl: prefix + "/export",
+                modalName: "会话",
+                columns: [{
+                    checkbox: true
+                },
+                {
+                    field: 'id',
+                    title: 'id',
+                    visible: false
+                },
+                {
+                    field: 'kefuId',
+                    title: '客服',
+                    formatter: function (value, row, index) {
+                        if ("kefu" == row.mesType) {
+                            return `<span class="badge badge-success">`+value+`</span>`+`<span class="badge badge-info">`+row.content+`</span>`
+                        }else {
+                            return `<span class="badge badge-success">`+value+`</span>`
+                        }
+                    }
+                },
+                {
+                    field: 'visitorId',
+                    title: '访客',
+                    formatter: function (value, row, index) {
+                        if ("visitor" == row.mesType) {
+                            return `<span class="badge badge-info">`+row.content+`</span>`+`<span class="badge badge-primary">`+value+`</span>`
+                        }else {
+                            return `<span class="badge badge-primary">`+value+`</span>`
+                        }
+                    }
+                },
+                {
+                    field: 'createdAt',
+                    title: '创建时间'
+                },
+                {
+                    field: 'status',
+                    title: '消息状态',
+                    formatter: function (value, row, index) {
+                        if ("read" == value) {
+                            return "已读";
+                        } else if ("unread" == value) {
+                            return "未读";
+                        }
+                    }
+                }]
+            };
+            $.table.init(options);
+        });
+    </script>
+</body>
+</html>

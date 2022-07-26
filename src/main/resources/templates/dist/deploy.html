@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>智能在线客服系统访客演示页面-免费在线客服系统源码-网站开源在线客服系统-私有化部署网页在线客服软件代码下载</title>
+    <meta name="keywords" content="智能在线客服系统,网站客服系统,免费在线客服,网站在线客服,在线客服软件,php客服" />
+    <meta name="description" content="智能在线客服系统，一套可独立私有化部署的免费开源客服系统，网站在线客服系统，下载zip解压即可，仅依赖MySQL数据库，是一个开箱即用的网页在线客服，适合PHP程序员使用，同时也是首页完全可以编辑的单页营销系统." />
+    <script src="https://cdn.staticfile.org/vue/2.6.11/vue.min.js"></script>
+    <style>
+        .deployLink {
+            width: 500px;
+            margin: 0 auto;
+            background-color: #ecf5ff;
+            padding: 5px;
+            color: #0061c5;
+            border: 1px solid #d9ecff;
+            line-height: 20px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+<h2 style="margin: 40px;text-align: center">智能在线客服系统访客演示页面</h2>
+
+
+<pre class="deployLink">
+
+</pre>
+
+<script src="https://api.qingtinger.com/static/js/kefu-front.js"></script>
+<script>
+  new Vue({
+        el: '#deployBox',
+        delimiters:["<{","}>"],
+        data: {
+            window:window,
+            entId:"",
+            kefuName:"",
+            siteUrl: "",
+        },
+        methods: {
+
+        },
+        mounted:function(){
+        },
+        created: function () {
+          const getQueryVariable = (path, variable) =>  {
+            var query = path.substring(1);
+            var vars = query.split("&");
+            for (var i=0;i<vars.length;i++) {
+              var pair = vars[i].split("=");
+              if(pair[0] === variable){return pair[1];}
+            }
+            return(false);
+          }
+          this.entId = getQueryVariable(window.location.search, 'entId')
+          this.siteUrl = getQueryVariable(window.location.search, 'siteUrl')
+          this.kefuName = getQueryVariable(window.location.search, 'kefuName')
+          let preText = `&lt;script src=&quot;${this.siteUrl}/static/js/kefu-front.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+    KEFU.init({
+        KEFU_URL:"${this.siteUrl}",//必填
+        KEFU_KEFU_ID: "${this.kefuName}",//必填
+        KEFU_ENT: ${this.entId},//必填
+        KEFU_LANG:&quot;cn&quot;,//cn中文，en英文
+        KEFU_SHOW_TYPES:2,//展示样式，1：普通右下角，2：圆形icon
+        KEFU_AUTO_OPEN:false,//是否自动展开
+    })
+&lt;/script&gt;`
+          document.querySelector('.deployLink').innerHTML = preText
+          let _this = this
+          KEFU.init({
+            KEFU_URL:_this.siteUrl,//必填
+            KEFU_KEFU_ID: _this.kefuName,//必填
+            KEFU_ENT: _this.entId,//必填
+            KEFU_LANG:"cn",//cn中文，en英文
+            KEFU_SHOW_TYPES:1,//展示样式，1：右下角长条，2：右边悬浮圆形icon
+            KEFU_AUTO_OPEN:false,//是否自动展开
+          })
+        }
+    })
+    
+</script>
+
+</body>
+</html>

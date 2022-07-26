@@ -1,0 +1,433 @@
+<html lang="cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <title>客服系统</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/element-ui/2.15.7/theme-chalk/index.min.css">
+    <script src="https://cdn.staticfile.org/vue/2.6.11/vue.min.js"></script>
+    <script src="https://cdn.staticfile.org/element-ui/2.15.7/index.js"></script>
+    <script src="https://cdn.staticfile.org/jquery/2.2.4/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <script src="/static/js/functions.js"></script>
+    <script src="/static/js/chat-lang.js?v=1.0.1"></script>
+</head>
+<style>
+    .el-message-box{
+        width: 800px;
+        overflow: auto;
+    }
+</style>
+<body class="text-center">
+<div id="app">
+    <template>
+        <div class="guideHeader">Hello，<{nickname}></div>
+        <div class="guideBg margin20" style="display: none">
+            <{noticeContent}>
+        </div>
+        <div class="guideContent">
+
+            <div class="left">
+                <ul>
+
+                    <dl>
+                        <dt>业务版本</dt>
+                        <dd><{versionName}></dd>
+                    </dl>
+                    <dl>
+                        <dt>版本号</dt>
+                        <dd>v<{versionCode}>
+                        </dd>
+                    </dl>
+                    <dl>
+                        <dt>访客链接</dt>
+                        <dd>
+                        <el-button  size="small" type="primary" v-on:click="copyText(host+'/chatIndex?kefu_id='+kefuName+'&ent_id='+entId)">复制</el-button>
+                        </dd>
+                    </dl>
+                    <dl>
+                        <dt>微信链接</dt>
+                        <dd>
+                            <el-button  size="small" type="primary" v-on:click="copyText(wechatMenuUrl)">复制</el-button>
+                        </dd>
+                    </dl>
+                    <dl>
+                        <dt>动态二维码</dt>
+                        <dd>
+                            <el-button  size="small" type="primary" v-on:click="dynicQrcodeDialog=true">生成</el-button>
+                        </dd>
+                    </dl>
+                </ul>
+
+                <div style="text-align: center;margin-right: 30px;">
+                    <p style="margin-bottom: 10px;">访客链接永久二维码</p>
+                    <div style="position: relative;">
+                        <img :src="avator" id="qrcodeLogo2" style="top:90px;margin-top:-20px;left:90px;margin-left:-20px;position:absolute;border:2px solid #fff;display: none;width: 40px;height:40px;border-radius: 8px;">
+                        <div id="dynicQrImg2">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center">
+                    <p style="margin-bottom: 10px;">微信链接永久二维码</p>
+                    <div style="position: relative;">
+                        <img :src="avator" id="qrcodeLogo3" style="top:90px;margin-top:-20px;left:90px;margin-left:-20px;position:absolute;border:2px solid #fff;display: none;width: 40px;height:40px;border-radius: 8px;">
+                        <div id="dynicQrImg3">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="right">
+
+                <el-tabs  @tab-click="handleTabClick">
+                    <el-tab-pane label="公告">
+
+                        <div class="news">
+
+                            <el-empty description="暂无数据" v-show="newsList.list.length==0"></el-empty>
+
+                            <div class="newsItem" v-for="v in newsList.list">
+                                <el-tag effect="dark" :type='v.tag' class="newsTag">
+                                    <{v.tag}>
+                                </el-tag>
+                                <a class="newsTitle" @click="showNewsContent(v)"><{v.title}></a>
+                                <span class="newsTime"><{v.created_at}></span>
+                                <div class="clear"></div>
+                            </div>
+
+                        </div>
+                        <el-pagination
+                                background
+                                @current-change="getNews"
+                                :current-page="newsList.page"
+                                layout="prev,pager, next"
+                                :page-size="newsList.pagesize"
+                                :total="newsList.count">
+                        </el-pagination>
+                    </el-tab-pane>
+                </el-tabs>
+            </div>
+        </div>
+
+            <el-row :gutter="10" style="margin:15px">
+                <el-col :span="8">
+                    <el-card class="box-card">
+                        <div slot="header" class="clearfix">
+                            <span>今日访客数</span>
+                        </div>
+                        <div class="text item">
+                            <p class="sumNum" v-html="statistics.toady_visitors"></p>
+                        </div>
+                        <div class="text item">
+                            <p>总访客数: <span  v-html="statistics.visitors"></span></p>
+                        </div>
+                    </el-card>
+                </el-col>
+                <el-col :span="8">
+                    <el-card class="box-card">
+                        <div slot="header" class="clearfix">
+                            <span>今日消息数</span>
+                        </div>
+                        <div class="text item">
+                            <p class="sumNum" v-html="statistics.today_messages"></p>
+                        </div>
+                        <div class="text item">
+                            <p>总消息数: <span  v-html="statistics.message"></span></p>
+                        </div>
+                    </el-card>
+                </el-col>
+                <el-col :span="8">
+                    <el-card class="box-card">
+                        <div slot="header" class="clearfix">
+                            <span>当前访客在线数量</span>
+                        </div>
+                        <div class="text item">
+                            <p class="sumNum" v-html="statistics.visitor_session"></p>
+                        </div>
+                        <div class="text item">
+                            <p>当前客服会话: <span  v-html="statistics.kefu_session"></span></p>
+                        </div>
+                    </el-card>
+                </el-col>
+            </el-row>
+
+
+        <div class="guideStatistics" id="visitorNums" style="height:500px;"></div>
+
+        <!--评价-->
+        <el-dialog
+                title="生成访客链接动态二维码"
+                :close-on-click-modal="false"
+                :show-close="true"
+                width="500px"
+                :visible.sync="dynicQrcodeDialog"
+        >
+            <el-alert
+                    style="margin-bottom: 10px"
+                    title="请谨慎生成新二维码，点击重置会使旧二维码失效。确认下面域名已经解析并绑定到客服平台服务器(例如当前网站域名)，该域名访客链接可访问"
+                    type="warning"
+                    show-icon>
+            </el-alert>
+            <el-input
+                    style="margin-bottom: 10px"
+                    type="textarea"
+                    :rows="2"
+                    placeholder="二维码域名(http/https开头，留空为当前登录域名)"
+                    v-model="dynicQrDomain">
+            </el-input>
+            <div style="margin-bottom: 20px">
+                <el-select v-model="dynicQrType" placeholder="请选择链接类型">
+                    <el-option label="普通链接" value="chatIndex"></el-option>
+                    <el-option label="微信链接" value="wechatIndex"></el-option>
+                </el-select>
+            </div>
+
+            <div id="qrcodeBox" style="position: relative;margin-bottom: 30px">
+                <img :src="avator" id="qrcodeLogo" style="top:130px;margin-top:-30px;left:130px;margin-left:-30px;position:absolute;border:2px solid #fff;display: none;width: 60px;height:60px;border-radius: 8px;">
+                <div id="dynicQrImg">
+                </div>
+            </div>
+
+            <el-button type="warning" @click="mkDynicImage(true)">重置</el-button>
+            <el-button type="primary" @click="mkDynicImage(false)">生成</el-button>
+        </el-dialog>
+    </template>
+</div>
+</body>
+<script src="/static/js/functions.js?v=1.0.0"></script>
+<script src="/static/js/echarts.min.js?v=1.0.0"></script>
+<script src="/static/js/jquery.qrcode.js"></script>
+<script>
+    var LANG=checkLang();
+    new Vue({
+        el: '#app',
+        delimiters:["<{","}>"],
+        data: {
+            window:window,
+            host:getBaseUrl(),
+            kefuId:"",
+            entId:"",
+            nickname:"",
+            kefuName:"",
+            versionName:"",
+            lastTime:"",
+            ipAddress:"",
+            noticeContent:"",
+            versionCode:"",
+            visitorQrcode:"",
+            visitorUrl:"",
+            wechatUrl:"",
+            deployLink:"",
+            wechatQrcode:"",
+            wechatMenuUrl:"",
+            avator:"",
+
+            newsList:{
+                list:[],
+                count:0,
+                page:1,
+                pagesize:4,
+            },
+            statistics:{},
+            needUpdate:false,
+            dynicQrcodeDialog:false,
+            dynicQrDomain:"",
+            dynicQrType:"chatIndex",
+            dynicQrImg:"",
+        },
+        methods: {
+            showStatistics(){
+                var _this=this;
+                sendAjax("/statistics","get",{},function(result) {
+                    _this.statistics = result.result;
+                });
+                sendAjax("/kefu/chartStatistics","get",{},function(data) {
+                    var result=data.result;
+                    var days=[];
+                    var nums=[];
+                    if(result.length<=0){
+                        return;
+                    }
+                    for(var i=result.length-1;i>=0;i--){
+                        days.push(result[i].day);
+                        nums.push(result[i].num)
+                    }
+
+                    // 基于准备好的dom，初始化echarts实例
+                    $(function () {
+                        var myChart = echarts.init($('#visitorNums')[0],null, {
+                            width: 1200,
+                            height: 500
+                        });
+                        // 指定图表的配置项和数据
+                        var option = {
+                            title: {
+                                text: '每日新增访客数量统计图'
+                            },
+                            tooltip: {},
+                            legend: {
+                                data: ['数量']
+                            },
+                            xAxis: {
+                                data: days
+                            },
+                            yAxis: {},
+                            series: [
+                                {
+                                    name: '数量',
+                                    type: 'bar',
+                                    data: nums,
+                                    barCategoryGap: '40%',
+                                },
+                                {
+                                    name: '数量',
+                                    type: 'line',
+                                    smooth: true,
+                                    data: nums,
+                                }
+                            ]
+                        };
+                        // 使用刚指定的配置项和数据显示图表。
+                        myChart.setOption(option);
+                    });
+                });
+            },
+            copyText(text){
+                copyText(text);
+                this.$message({
+                    message: "ok",
+                    type: 'success'
+                });
+            },
+            kefuInfo() {
+                var _this = this;
+                sendAjax("/kefu/kefuinfo","get",{},function (data) {
+                    if (data.code != 200) {
+                        window.location.href = "/login";
+                    } else {
+                        var result = data.result;
+                        _this.kefuId = result.id;
+                        _this.entId = result.ent_id;
+                        _this.kefuName = result.name;
+                        _this.nickname = result.nickname;
+                        _this.avator = result.avator;
+                        _this.visitorUrl=_this.host+'/chatIndex?kefu_id='+result.name+'%26ent_id='+result.ent_id;
+                        _this.wechatUrl=_this.host+'/wechat/server/'+result.ent_id+'/'+result.name;
+                        _this.visitorQrcode=_this.host+"/kefu/qrcode?str="+_this.visitorUrl+"&token="+localStorage.getItem("token");
+                        _this.wechatMenuUrl=_this.host+'/wechatIndex?ent_id='+result.ent_id+'&kefu_id='+result.name;
+
+                        var info=_this.host+'/chatIndex?kefu_id='+result.name+'&ent_id='+result.ent_id;
+                        $("#qrcodeLogo2").show();
+                        $('#dynicQrImg2').empty().qrcode({
+                            text: info,      // 二维码的内容
+                            render: "canvas",               // 设置渲染方式
+                            width: 180,                     // 设置宽度: 默认256
+                            height: 180,                    // 设置高度: 默认256
+                            background: "#ffffff",          // 背景颜色
+                            foreground: "#000000",          // 前景颜色
+                        });
+
+                        var info=_this.host+'/wechatIndex?kefu_id='+result.name+'&ent_id='+result.ent_id;
+                        $("#qrcodeLogo3").show();
+                        $('#dynicQrImg3').empty().qrcode({
+                            text: info,      // 二维码的内容
+                            render: "canvas",               // 设置渲染方式
+                            width: 180,                     // 设置宽度: 默认256
+                            height: 180,                    // 设置高度: 默认256
+                            background: "#ffffff",          // 背景颜色
+                            foreground: "#000000",          // 前景颜色
+                        });
+                    }
+                });
+            },
+            getVersion(){
+                var _this=this;
+                sendAjax("/other/version","get",{},function(data){
+                    var result=data.result;
+                    _this.versionName=result.version_name;
+                    var nowCode=result.version_code;
+                    _this.versionCode=nowCode
+                    // sendAjax("https://gofly.sopans.com/other/version","get",{},function(data){
+                    //     var result=data.result;
+                    //     var newCode=result.version_code;
+                    //     var diff=compareVersion(nowCode,newCode)
+                    //     if(diff<0){
+                    //         _this.needUpdate=true;
+                    //     }
+                    // });
+                });
+
+            },
+            getNews(page) {
+                var _this = this;
+                sendAjax("/other/news","get",{page:page,pagesize:this.newsList.pagesize},function(result){
+                    _this.newsList=result.result;
+                });
+            },
+            showNewsContent(item){
+                this.$alert(item.content, item.title, {
+                    dangerouslyUseHTMLString: true,
+                });
+            },
+            //处理tab切换
+            handleTabClick(tab, event){
+                let _this=this;
+                if(tab.name=="wechat"){
+                    sendAjax("/wechat/showQrcode","get",{entId:_this.entId,sceneName:_this.kefuName},function(result){
+                        if(result.code==200){
+                            _this.wechatQrcode=result.result.url
+                        }
+                    });
+                }
+            },
+            mkDynicImage(reset){
+                var _this=this;
+                if(_this.dynicQrDomain==""){
+                    _this.dynicQrDomain=_this.host;
+                }
+                var resetFlag="";
+                if(reset){
+                    resetFlag="reset";
+                    $confirmTitle='此操作将会使旧二维码失效，二维码图片请手动截图另存到本地，是否继续?';
+                }else{
+                    $confirmTitle="此操作将生成新二维码，二维码图片请手动截图另存到本地，是否继续?"
+                }
+                this.$confirm($confirmTitle, '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(function(){
+                    sendAjax("/kefu/mkDynicQrcode","post",{
+                        domain:_this.dynicQrDomain,
+                        dynicQrType:_this.dynicQrType,
+                        resetFlag:resetFlag,
+                    },function(res) {
+                        var uuid=res.result.uuid;
+                        var info=_this.dynicQrDomain+"/other/checkQrcode?uuid="+uuid;
+                        _this.dynicQrImg=_this.host+"/kefu/qrcode?str="+info+"&token="+localStorage.getItem("token");
+                        $("#qrcodeLogo").show();
+                        $('#dynicQrImg').empty().qrcode({
+                            text: info,      // 二维码的内容
+                            render: "canvas",               // 设置渲染方式
+                            width: 260,                     // 设置宽度: 默认256
+                            height: 260,                    // 设置高度: 默认256
+                            background: "#ffffff",          // 背景颜色
+                            foreground: "#000000",          // 前景颜色
+                        });
+                    });
+                });
+
+            }
+        },
+        mounted:function(){
+        },
+        created: function () {
+            this.showStatistics();
+            this.kefuInfo();
+            this.getVersion();
+            this.getNews(1);
+        }
+    })
+</script>
+</html>

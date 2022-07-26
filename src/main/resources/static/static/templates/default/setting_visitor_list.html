@@ -1,0 +1,152 @@
+{{template "header" }}
+<style>
+    .el-dialog__body{
+        padding: 0px 20px;
+    }
+    .el-dialog__header{
+        display: none;
+    }
+</style>
+<div id="app" style="width:100%">
+    <template>
+        <el-container>
+
+            <el-main class="mainMain" style="margin:0px 10px">
+                <el-form :inline="true" :model="visitorSearch" class="demo-form-inline">
+                    <el-form-item label="访客名称">
+                        <el-input v-model="visitorSearch.name"></el-input>
+                    </el-form-item>
+                    <el-form-item label="访客标签">
+                        <el-select clearable="true" v-model="visitorSearch.tag">
+                            <el-option :label="item.name" :value="item.id" v-for="item in allTags" v-bind:key="item.id"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button type="primary" @click="searchVisitor"  icon="el-icon-search" ></el-button>
+                    </el-form-item>
+                </el-form>
+                <el-tag
+                        type='success'
+                        style="margin: 4px;"
+                        :key="tag.id"
+                        v-for="tag in allTags"
+                        closable
+                        effect="dark"
+                        :disable-transitions="true"
+                        @close="delThisTag(tag.id)">
+                    <{tag.name}>
+                </el-tag>
+                <el-table
+                        :data="visitorListAll.list"
+                        border
+                        style="width: 100%;">
+                    <el-table-column
+                            prop="img"
+                            width="150px"
+                            label="用户头像">
+                        <template slot-scope="scope">
+                            <div  style="display: flex;align-items: center">
+                                <el-avatar :size="50"><img :src="scope.row.avator"/></el-avatar>&nbsp;
+                                <el-tag type='success' v-show="scope.row.status==3">已关注</el-tag>
+                                <el-tag type='danger' v-show="scope.row.status==2">已取关</el-tag>
+                            </div>
+
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            width="200px"
+                            prop="username"
+                            label="用户账号">
+                    </el-table-column>
+                    <el-table-column
+                            width="150px"
+                            prop="ip"
+                            label="IP">
+                    </el-table-column>
+                    <el-table-column
+                            prop="city"
+                            label="城市">
+                    </el-table-column>
+                    <el-table-column
+                            prop="last_message"
+                            label="最新消息">
+                    </el-table-column>
+                    <el-table-column
+                            width="80px"
+                            prop="unread_num"
+                            label="未读数">
+                    </el-table-column>
+                    <el-table-column
+                            prop="updated_at"
+                            label="上线时间">
+                    </el-table-column>
+                    <el-table-column
+                            style="line-height: 30px;"
+                            width="380px"
+                            prop="id"
+                            label="操作">
+                        <template slot-scope="scope">
+                            <el-button @click="visitorMessageDialog=true;visitorIdMessage=scope.row.visitor_id" type="primary" size="small" icon="el-icon-view" >查看</el-button>
+                            <el-button @click="getVisitorAttr(scope.row.visitor_id)" type="primary" size="small" icon="el-icon-message" >备注</el-button>
+                            <el-button @click="deleteVisitorMessage(scope.row.visitor_id)" type="danger" size="small" icon="el-icon-s-release" >清空</el-button>
+                            <el-button @click="deleteVisitor(scope.row.visitor_id)" type="danger" size="small" icon="el-icon-delete-solid" >删除</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                        background
+                        @current-change="visitorListAllPage"
+                        :current-page="visitorListAll.page"
+                        layout="prev,pager, next"
+                        :page-size="visitorListAll.pagesize"
+                        :total="visitorListAll.count">
+                </el-pagination>
+            </el-main>
+
+        </el-container>
+        <el-dialog
+                :visible.sync="visitorAttrDialog"
+                width="50%"
+                top="0"
+        >
+            <el-form label-width="70px">
+                <el-form-item :label="flyLang.realname">
+                    <el-input v-model="visitorAttrs.real_name"></el-input>
+                </el-form-item>
+                <el-form-item :label="flyLang.tel">
+                    <el-input v-model="visitorAttrs.tel"></el-input>
+                </el-form-item>
+                <el-form-item :label="flyLang.email">
+                    <el-input v-model="visitorAttrs.email"></el-input>
+                </el-form-item>
+                <el-form-item label="QQ">
+                    <el-input v-model="visitorAttrs.qq"></el-input>
+                </el-form-item>
+                <el-form-item :label="flyLang.wechat">
+                    <el-input v-model="visitorAttrs.wechat"></el-input>
+                </el-form-item>
+                <el-form-item :label="flyLang.comment">
+                    <el-input v-model="visitorAttrs.comment"></el-input>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="visitorAttrDialog = false"><{flyLang.cancel}></el-button>
+              </span>
+        </el-dialog>
+
+        <el-dialog
+                :visible.sync="visitorMessageDialog"
+                width="90%"
+                top="0"
+                >
+            <iframe :src="'/setting_visitor_message?page=1&visitor='+visitorIdMessage" frameborder="0" width="100%" height="750px"></iframe>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="visitorMessageDialog = false">取 消</el-button>
+                <el-button type="primary" @click="visitorMessageDialog = false">确 定</el-button>
+            </span>
+        </el-dialog>
+    </template>
+
+</div>
+</body>
+{{template "setting_bottom" .}}

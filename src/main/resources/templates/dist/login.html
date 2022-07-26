@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>{{.SystemTitle}}</title>
+    <meta name="keywords" content="{{.SystemKeywords}}" />
+    <meta name="description" content="{{.SystemDesc}}" />
+    <link rel="stylesheet" href="https://cdn.staticfile.org/element-ui/2.15.1/theme-chalk/index.min.css">
+    <script src="https://cdn.staticfile.org/vue/2.6.11/vue.min.js"></script>
+	<script src="https://cdn.staticfile.org/element-ui/2.15.1/index.js"></script>
+	<script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        .clear{clear: both;}
+        .signin {
+            width: 350px;
+            padding: 20px;
+            margin:100px auto;
+            background: #fff;
+            -webkit-box-shadow: 0 1px 2px 0 rgba(101,129,156,.08);
+            box-shadow: 0 1px 2px 0 rgba(101,129,156,.08);
+        }
+        .signin h1,.signin h2,.signin .copyright{
+            font-weight: normal;
+            color: #4d627b;
+            text-align: center;
+        }
+        .signin .loginTitle{
+            font-size: 24px;
+            margin: 10px 0px;
+        }
+        .signin .loginDesc{
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .signin .loginDesc .regBtn{
+            float: left;
+        }
+        .signin .loginDesc a{
+            text-decoration: none;
+            cursor: pointer;
+            color: #409EFF;
+        }
+        .signin .copyright{
+            font-size: 12px;
+        }
+        @media (max-width: 768px) {
+            .signin{
+                width: 90%;
+                margin:40px auto;
+                background-color: #f5f5f5;
+                box-shadow:none;
+            }
+        }
+    </style>
+    <link rel="icon" href="/static/images/favicon.ico">
+</head>
+<body>
+<div id="app" class="signin">
+    <template>
+        <div class="loginHtml" v-show="!showRegHtml">
+            <h1 class="loginTitle">{{.SystemLoginTitle}}</h1>
+            <el-form :model="kefuForm"  :rules="rules" ref="kefuForm">
+                <el-form-item  prop="username">
+                    <el-input v-model="kefuForm.username" placeholder="用户名"></el-input>
+                </el-form-item>
+                <el-form-item  prop="password">
+                    <el-input show-password v-on:keyup.enter.native="kefuLogin('kefuForm')" v-model="kefuForm.password" placeholder="密码"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button style="width: 100%" :loading="loading" type="primary" @click="kefuLogin('kefuForm')">登录</el-button>
+                </el-form-item>
+            </el-form>
+            <h2 class="loginDesc">
+                {{if .isRegister}}
+                <a  @click="showRegHtml=true" class="regBtn">注册新账户</a>
+                {{end}}
+            </h2>
+            <div class="clear"></div>
+        </div>
+        <div class="regHtml" v-show="showRegHtml">
+
+            <h1 class="loginTitle">创建你的账户！</h1>
+            <el-form :model="regUserForm"  :rules="registerRules" ref="regUserFormName">
+                <el-form-item  prop="username">
+                    <el-input v-model="regUserForm.username" placeholder="用户名"></el-input>
+                </el-form-item>
+                <el-form-item  prop="email" style="display:none">
+                    <el-input v-model="regUserForm.email" placeholder="邮箱"></el-input>
+                </el-form-item>
+                <el-form-item  prop="emailCode" style="display:none">
+                    <el-input style="float: left; width: 180px;" v-model="regUserForm.emailCode" placeholder="邮箱验证码"></el-input>
+                    <el-button style="float: right;"  type="primary" @click="">获取验证码</el-button>
+                </el-form-item>
+                <el-form-item  prop="nickname">
+                    <el-input v-model="regUserForm.nickname" placeholder="显示名称"></el-input>
+                </el-form-item>
+                <el-form-item  prop="password">
+                    <el-input show-password v-model="regUserForm.password" placeholder="密码"></el-input>
+                </el-form-item>
+                <el-form-item  prop="rePassword">
+                    <el-input show-password v-model="regUserForm.rePassword" placeholder="确认密码"></el-input>
+                </el-form-item>
+                <el-form-item  prop="captcha">
+                    <el-input style="float: left; width: 150px;" v-model="regUserForm.captcha" placeholder="验证码"></el-input>
+                    <img style="float: right;" :src="codeSrc" @click="codeSrc='/captcha?t='+Math.random()">
+                </el-form-item>
+                <el-form-item>
+                    <el-button style="width: 100%" :loading="loading" type="primary" @click="register()">注册</el-button>
+                </el-form-item>
+            </el-form>
+            <h2 class="loginDesc">已有账号<a  @click="showRegHtml=false">立即登录</a></h2>
+
+        </div>
+        {{.SystemNotice}}
+        <p class="copyright">{{.CopyrightTxt}} </p>
+
+</template>
+</div>
+</body>
+<script>
+	new Vue({
+		el: '#app',
+        delimiters:["<{","}>"],
+		data: {
+            window:window,
+            activeName:"second",
+			loading:false,
+            localAuth:{
+                username:'',
+                password:'',
+            },
+            ruleForm:{
+                server:'',
+                email:'',
+                password:'',
+            },
+            kefuForm:{
+                username:'',
+                password:'',
+            },
+            rules: {
+                username: [
+                    { required: true, message: '用户名不能为空', trigger: 'blur' },
+                ],
+            },
+            registerRules: {
+                username: [
+                    { required: true, message: '用户名不能为空', trigger: 'blur' },
+                    { validator: function (rule,value,callback){
+                            let reg= /^[0-9A-Za-z]{4,20}$/
+                            if(!reg.test(value)){callback(new Error('必须是由4-20位字母或数字组合'))
+                            }else{
+                                callback()
+                            }
+                        },trigger: 'blur'},
+                ],
+                password: [
+                    { required: true, message: '密码不能为空', trigger: 'blur' },
+                ],
+                nickname: [
+                    { required: true, message: '昵称不能为空', trigger: 'blur' },
+                ],
+                rePassword: [
+                    { required: true, message: '确认密码不能为空', trigger: 'blur' },
+                ],
+                captcha: [
+                    { required: true, message: '验证码不能为空', trigger: 'blur' },
+                ],
+            },
+            showRegHtml:false,
+            regUserForm:{
+                username:"",
+                nickname:"",
+                password:"",
+                rePassword:"",
+                username:"",
+                captcha:"",
+            },
+            codeSrc:"/captcha",
+		},
+		methods: {
+            //提交表单
+            kefuLogin(formName){
+                let _this=this;
+                this.$refs[formName].validate((valid) => {
+                    if (!valid) {
+                        return false;
+                    } else {
+                        let data = {};
+                        data.type="kefu";
+                        data.username = _this.kefuForm.username;
+                        data.password = _this.kefuForm.password;
+                        _this.loading = true;
+                        $.post("/check", data, function (data) {
+                            if (data.code == 200) {
+                                _this.$message({
+                                    message: data.msg,
+                                    type: 'success'
+                                });
+                                localStorage.setItem("token",data.result.token);
+                                localStorage.setItem("ref_token",data.result.ref_token);
+                                localStorage.setItem("create_time",data.result.create_time);
+                                window.location.href="/main";
+                            } else {
+                                _this.$message({
+                                    message: data.msg,
+                                    type: 'error'
+                                });
+                            }
+                            _this.loading = false;
+                        });
+                    }
+                });
+			},
+            //重置表单
+            resetForm(formName) {
+                this.loading=false;
+                this.$refs[formName].resetFields();
+            },
+            //注册
+            register(){
+                var _this=this;
+                this.$refs['regUserFormName'].validate((valid) => {
+                        if (!valid) {
+                            return false;
+                        } else {
+                            var data = {};
+                            data.name=_this.regUserForm.username;
+                            data.password = _this.regUserForm.password;
+                            data.rePassword = _this.regUserForm.rePassword;
+                            data.nickname=_this.regUserForm.nickname;
+                            data.captcha=_this.regUserForm.captcha;
+                            this.loading=true;
+                            $.post("/register", data, function (data) {
+                                if (data.code == 200) {
+                                    _this.$message({
+                                        message: data.msg,
+                                        type: 'success'
+                                    });
+                                    window.location.href="/login";
+                                } else {
+                                    _this.$message({
+                                        message: data.msg,
+                                        type: 'error'
+                                    });
+                                }
+                                _this.loading=false;
+                            });
+                        }
+                });
+            }
+		},
+        created: function () {
+            if (top.location != location){
+                top.location.href = location.href;
+            }
+        }
+	})
+
+</script>
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?82938760e00806c6c57adee91f39aa5e";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+{{.SystemKefu}}
+
+</html>
